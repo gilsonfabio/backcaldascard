@@ -93,24 +93,24 @@ module.exports = {
         let month = datProcess.getMonth();
         let day = datProcess.getDate();
         let dayVct = 15;    
-
-        //console.log(datProcess);
-        //console.log('Ano:', year);
-        //console.log('Mes:', month);
-        //console.log('Dia:', day);
-
-        //console.log('passou na compra')
-
+//
+//        console.log(convenio);
+//        console.log(datProcess);
+//        console.log('Ano:', year);
+//        console.log('Mes:', month);
+//        console.log('Dia:', day);
+//        console.log('passou na compra')
+//
         const horProcess = moment().format('hh:mm:ss');        
         const idCompra = cmpId;    
         
         let vlrResto = cmpVlrCompra % cmpQtdParcela;
         let vlrParcela = ((cmpVlrCompra - vlrResto) / cmpQtdParcela);
-        
-        //console.log(cmpVlrCompra);
-        //console.log(vlrResto);
-        //console.log(vlrParcela);
-
+//        
+//        console.log(cmpVlrCompra);
+//        console.log(vlrResto);
+//        console.log(vlrParcela);
+//
         let staParcela = 'A';
         
         for (let i = 1; i <= cmpQtdParcela; i++) {
@@ -155,7 +155,7 @@ module.exports = {
                 parStaParcela: staParcela,                
             });
 
-            //console.log('passou na parcela') 
+//            console.log('passou na parcela') 
 
             const cnv = await connection('convenios')
             .where('cnvId',convenio)
@@ -170,15 +170,19 @@ module.exports = {
             let auxLiquido = auxParcela - auxTaxa; 
             let auxSistema = ((auxTaxa * perSist) / 100);
 
-            //console.log('mes totalizador de vendas convenio:', mesParc);
+//            console.log('mes totalizador de vendas convenio:', mesParc);
 
-            const atuCnv = await connection('totVdaCnv')
-            .where('tcnvId',convenio)
-            .where('tcnvMes',mesParc)
-            .where('tcnvAno',anoParc)
-            .select('tcnvVlrTotal');
 
-            if(!atuCnv) {
+            const updConv = await connection('totVdaCnv')
+                .where('tcnvId',convenio)
+                .where('tcnvMes',mesParc)
+                .where('tcnvAno',anoParc)
+                .increment({tcnvVlrTotal: auxParcela})
+                .increment({tcnvVlrTaxa: auxTaxa})
+                .increment({tcnvVlrLiquido: auxLiquido})
+                .increment({tcnvVlrSistema: auxSistema});
+
+            if(!updConv) {
                 const [totaliza] = await connection('totVdaCnv').insert({
                     tcnvId: convenio,
                     tcnvAno: anoParc,
@@ -188,28 +192,20 @@ module.exports = {
                     tcnvVlrLiquido: auxLiquido,
                     tcnvVlrSistema: auxSistema,                
                 });
-            }else {
-                const updConv = await connection('totVdaCnv')
-                .where('tcnvId',convenio)
-                .where('tcnvMes',mesParc)
-                .where('tcnvAno',anoParc)
-                .increment({tcnvVlrTotal: auxParcela})
-                .increment({tcnvVlrTaxa: auxTaxa})
-                .increment({tcnvVlrLiquido: auxLiquido})
-                .increment({tcnvVlrSistema: auxSistema});
-            };          
+            }
 
-            //console.log('totalizou convenio')
+//            console.log('totalizou convenio')
 
             const usr = await connection('servidores')
             .where('usrId',servidor)
             .select('usrCartao', 'usrEmail', 'usrNome');
 
             let nroCartao = usr[0].usrCartao;            
-            //console.log('Cartão:',nroCartao);
-            //console.log('mes:',mesParc);
-            //console.log('ano:',anoParc);
-
+//            
+//            console.log('Cartão:',nroCartao);
+//            console.log('mes:',mesParc);
+//            console.log('ano:',anoParc);
+//
             const updServ = await connection('usrSaldo')
             .where('usrServ',nroCartao)
             .where('usrMes',mesParc)
@@ -217,9 +213,10 @@ module.exports = {
             .increment({usrVlrUsado: vlrParcela})
             .decrement({usrVlrDisponivel: vlrParcela});        
 
-            //console.log('atualizou saldo servidor')
+//            console.log('atualizou saldo servidor')
         }
 
+/*
         const conv = await connection('convenios')
         .where('cnvId', cmpConvenio)
         .select('cnvEmail', 'cnvNomFantasia')
@@ -277,13 +274,17 @@ module.exports = {
           </html> 
             `,
         });
-        //console.log(mailSent);
+//        console.log(mailSent);
 
-        console.log('enviou email da compra')
-                        
+//        console.log('enviou email da compra')
+    
+*/
+
         return response.status(200).send();  
     },    
+  
     
+
     async searchCompras (request, response) {
         let id = request.params.idCmp;
         let status = 'A';
