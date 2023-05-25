@@ -67,7 +67,7 @@ module.exports = {
          
         const usuario = await connection('servidores')
             .where('usrCartao',nroCartao)
-            .select('usrSalBase');
+            .select('usrSalLiquido');
          
         if (!usuario) {
             return response.status(400).json({ error: 'Não encontrou servidor com este ID'});
