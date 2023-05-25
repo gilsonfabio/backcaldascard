@@ -73,13 +73,13 @@ module.exports = {
             return response.status(400).json({ error: 'Não encontrou servidor com este ID'});
         } 
         
-        console.log(usuario[0].usrSalLiquido);
+        //console.log(usuario[0].usrSalLiquido);
 
         var vlrLimite = ((usuario[0].usrSalLiquido * 0.3));
         var vlrInicial = 0 ;
 
-        console,log(vlrLimite);
-        
+        //console.log(vlrLimite);
+
         const user = await connection('usrSaldo')
             .where('usrServ',nroCartao)
             .where('usrMes',month)
