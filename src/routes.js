@@ -23,7 +23,7 @@ const { Router } = require('express');
 
 routes.get('/', (request, response) => {
     response.json({
-        message: 'Bem-vindo ao servidor Sindicaldas!',
+        message: 'Bem-vindo ao servidor Sindicaldas - ver:1.23!',
     });
 });
 routes.get('/users', UsersController.index);
