@@ -72,8 +72,8 @@ module.exports = {
         if (!usuario) {
             return response.status(400).json({ error: 'Não encontrou servidor com este ID'});
         } 
-          
-        var vlrLimite = ((usuario[0].usrSalLiquido * 30) / 100);
+        var vlrLimite.toFixed(2) = 0.00;  
+        vlrLimite.toFixed(2) = ((usuario[0].usrSalLiquido * 0.3));
         var vlrInicial = 0 ;
 
         const user = await connection('usrSaldo')
