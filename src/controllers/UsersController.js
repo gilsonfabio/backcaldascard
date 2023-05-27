@@ -67,18 +67,14 @@ module.exports = {
          
         const usuario = await connection('servidores')
             .where('usrCartao',nroCartao)
-            .select('usrSalLiquido');
+            .select('usrSalBase');
          
         if (!usuario) {
             return response.status(400).json({ error: 'Não encontrou servidor com este ID'});
         } 
-        
-        //console.log(usuario[0].usrSalLiquido);
-
-        var vlrLimite = ((usuario[0].usrSalLiquido * 0.3));
+          
+        var vlrLimite = ((usuario[0].usrSalBase * 30) / 100);
         var vlrInicial = 0 ;
-
-        //console.log(vlrLimite);
 
         const user = await connection('usrSaldo')
             .where('usrServ',nroCartao)
@@ -449,7 +445,7 @@ module.exports = {
         //var datNascimento = new Date(usrNascimento);
         //var datAdmissao = new Date(usrAdmissao);
         //var datNasConjuge = new Date(usrNasConjuge);
-
+        var senha = crypto.createHash('md5').update(usrPassword).digest('hex');
         await connection('servidores').where('usrId', id)   
         .update({
             usrNome,
@@ -483,7 +479,7 @@ module.exports = {
             usrObsBloqueio,
             usrPai,
             usrMae,
-            usrPassword             
+            usrPassword: senha
         });
            
         return response.status(204).send();

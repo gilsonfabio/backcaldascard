@@ -23,7 +23,7 @@ const { Router } = require('express');
 
 routes.get('/', (request, response) => {
     response.json({
-        message: 'Bem-vindo ao servidor Sindicaldas - ver:1.23!',
+        message: 'Bem-vindo ao servidor Sindicaldas!',
     });
 });
 routes.get('/users', UsersController.index);
@@ -76,6 +76,8 @@ routes.put('/updPassCnv/:emailUsuario', ConveniosController.updPassCnv);
 routes.put('/updSnhCnvCanc/:emailUsuario', ConveniosController.updSnhCnvCanc);
 routes.get('/classCnv/:search', ConveniosController.classCnv);
 routes.get('/signInCnc/:email/:password', ConveniosController.signInCnc);
+
+routes.get('/maxParcelas/:cnvId', ConveniosController.maxParcelas);
 
 routes.get('/loginSrv/:email/:password', UsersController.loginSrv);
 

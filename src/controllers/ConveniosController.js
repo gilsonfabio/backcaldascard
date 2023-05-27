@@ -136,6 +136,22 @@ module.exports = {
         return response.json(convenio);
     },   
     
+    async maxParcelas (request, response) {
+        let id = request.params.cnvId;
+        let status = "A";
+
+        //console.log('Search Convenio: ', id);
+
+        const convenio = await connection('convenios')
+        .where('cnvId', id)
+        .where('cnvStatus', status)
+        .select('cnvQtdParc');
+
+        //console.log(convenio);
+
+        return response.json(convenio);
+    },   
+    
     async updateConv(request, response) {
         let id = request.params.idCnv;         
         
@@ -152,7 +168,8 @@ module.exports = {
             cnvEstado,
             cnvCep,
             cnvPassword,
-            cnvCanPassword} = request.body;
+            cnvCanPassword,
+            cnvQtdParc } = request.body;
 
         var snhConvenio = crypto.createHash('md5').update(cnvPassword).digest('hex');
         var snhCancelamento = crypto.createHash('md5').update(cnvCanPassword).digest('hex');
@@ -173,7 +190,8 @@ module.exports = {
             cnvEstado,
             cnvCep,
             cnvPassword: snhConvenio,
-            cnvCanPassword: snhCancelamento          
+            cnvCanPassword: snhCancelamento,
+            cnvQtdParc          
         });
            
         return response.status(204).send();
