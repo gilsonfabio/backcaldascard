@@ -104,8 +104,17 @@ module.exports = {
         const horProcess = moment().format('hh:mm:ss');        
         const idCompra = cmpId;    
         
-        let vlrResto = cmpVlrCompra % cmpQtdParcela;
-        let vlrParcela = ((cmpVlrCompra - vlrResto) / cmpQtdParcela);
+        let vlrParcela = cmpVlrCompra / cmpQtdParcela;
+        let vlrResult = vlrParcela * cmpQtdParcela;
+        let vlrResto = 0;
+        
+        vlrResto = cmpVlrCompra - vlrResult;
+        
+
+
+
+        //let vlrResto = cmpVlrCompra % cmpQtdParcela;
+        //let vlrParcela = ((cmpVlrCompra - vlrResto) / cmpQtdParcela);
 //        
 //        console.log(cmpVlrCompra);
 //        console.log(vlrResto);
@@ -394,6 +403,12 @@ module.exports = {
         let administrador = request.body.cmpIdCanc;
         let datCanc = new Date; 
         let status = 'C';      
+
+        const compras = await connection('compras')
+            .where('cmpId', id)
+            .join('servidores', 'usrId', 'compras.cmpServidor')
+            .select(['compras.cmpServidor', 'compras.cmpConvenio', 'compras.cmpServidor', 'servidores.usrCartao']);
+
         const cncCompra = await connection('compras')
             .where('cmpId',id)
             .update({
