@@ -104,21 +104,27 @@ module.exports = {
         const horProcess = moment().format('hh:mm:ss');        
         const idCompra = cmpId;    
         
-        let vlrParcela = cmpVlrCompra / cmpQtdParcela;
-        let vlrResult = vlrParcela * cmpQtdParcela;
-        let vlrResto = 0;
-        
-        vlrResto = cmpVlrCompra - vlrResult;
-        
+        let vlrParcela = 0.00;
+        vlrParcela = parseFloat((cmpVlrCompra).toFixed(2) / cmpQtdParcela);
+        let vlrResult = 0.00;
+        vlrResult = parseFloat((vlrParcela).toFixed(2) * cmpQtdParcela);
+        let vlrResto = 0.00;
+        vlrResto = parseFloat((cmpVlrCompra).toFixed(2) - (vlrResult).toFixed(2));
 
 
+        //vlrParcela = Math.floor(cmpVlrCompra / cmpQtdParcela);
+        //let vlrResto = 0;
+        //vlrResto = cmpVlrCompra % cmpQtdParcela ;
+        
+        //console.log(vlrParcela);
+        //console.log(vlrResto);
 
         //let vlrResto = cmpVlrCompra % cmpQtdParcela;
         //let vlrParcela = ((cmpVlrCompra - vlrResto) / cmpQtdParcela);
 //        
-//        console.log(cmpVlrCompra);
-//        console.log(vlrResto);
-//        console.log(vlrParcela);
+        //console.log(cmpVlrCompra);
+        //console.log(vlrResto);
+        //console.log(vlrParcela);
 //
         let staParcela = 'A';
         
