@@ -67,13 +67,13 @@ module.exports = {
          
         const usuario = await connection('servidores')
             .where('usrCartao',nroCartao)
-            .select('usrSalBase');
+            .select('usrSalLiquido');
          
         if (!usuario) {
             return response.status(400).json({ error: 'Não encontrou servidor com este ID'});
         } 
           
-        var vlrLimite = ((usuario[0].usrSalBase * 30) / 100);
+        var vlrLimite = ((usuario[0].usrSalLiquido * 30) / 100);
         var vlrInicial = 0 ;
 
         const user = await connection('usrSaldo')
