@@ -298,8 +298,6 @@ module.exports = {
         return response.status(200).send();  
     },    
   
-    
-
     async searchCompras (request, response) {
         let id = request.params.idCmp;
         let status = 'A';
@@ -413,7 +411,10 @@ module.exports = {
         const compras = await connection('compras')
             .where('cmpId', id)
             .join('servidores', 'usrId', 'compras.cmpServidor')
-            .select(['compras.cmpServidor', 'compras.cmpConvenio', 'compras.cmpServidor', 'servidores.usrCartao']);
+            .select(['compras.cmpServidor', 'compras.cmpConvenio', 'compras.cmpServidor', 'compras.cmpQtdParcela', 'servidores.usrCartao']);
+
+        let nroCartao = compras[0].usrCartao;
+        let qtdParc = compras[0].cmpQtdParcela;
 
         const cncCompra = await connection('compras')
             .where('cmpId',id)
@@ -428,6 +429,40 @@ module.exports = {
             .update({
                 parStaParcela: status,
         })
+
+        let nro = 1;
+        const parc = await connection('cmpParcelas')
+            .where('parIdCompra',id)
+            .where('parNroParcela', nro)
+            .select('parVctParcela', 'parVlrParcela')
+        
+        let datProcess = parc[0].parVctParcela;    
+        let year = datProcess.getFullYear();
+        let month = datProcess.getMonth() + 1;
+
+        let vlrParcela = parc[0].parVlrParcela;
+
+        while (nro <= qtdParc) { 
+
+            //console.log(nroCartao);
+            //console.log(year);
+            //console.log(month);
+            //console.log(vlrParcela);
+
+            const updServ = await connection('usrSaldo')
+                .where('usrServ',nroCartao)
+                .where('usrMes',month)
+                .where('usrAno',year)
+                .decrement({usrVlrUsado: vlrParcela})
+                .increment({usrVlrDisponivel: vlrParcela});          
+
+            month++;
+            if (month === 13) {
+                month = 01;
+                year++;
+            } 
+            nro++;   
+        }
 
         return response.json({cncCompra});
     },
