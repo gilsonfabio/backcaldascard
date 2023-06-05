@@ -485,10 +485,10 @@ module.exports = {
                 //.select(['cmpParcelas.parIdCompra','cmpParcelas.parVctParcela', 'cmpParcelas.parVlrParcela', 'compras.cmpServidor'])
                 .sum({totCmp: 'parVlrParcela'});
 
-            let result = Object.values(JSON.parse(JSON.stringify(total[0].total)));
-            console.log({result});
+            let data = JSON.stringify(total[0].totCmp);
+            console.log(data);
 
-            let totCompras = parseFloat({total});
+            let totCompras = parseFloat(data);
             
             let vlrDisponivel = vlrLimite - totCompras;
             
