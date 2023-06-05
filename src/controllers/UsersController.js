@@ -138,7 +138,6 @@ module.exports = {
         return response.status(200).json({ error: 'Servidor encontrado com sucesso!'});
     },
 
-
     /*
     async verifUser(request, response) {
         var nroCartao = request.params.cartao;        

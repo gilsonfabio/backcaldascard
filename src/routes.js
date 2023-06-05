@@ -153,5 +153,9 @@ routes.get('/tipos', TiposController.index);
 routes.post('/newtipo', TiposController.create);
 routes.put('/alttipo/:tipId', TiposController.updateTip);
 
+
+routes.get('/busTotCmp/:idUsr', ComprasController.busTotCmp);
+
+
 module.exports = routes;
 

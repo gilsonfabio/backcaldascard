@@ -111,21 +111,6 @@ module.exports = {
         let vlrResto = 0.00;
         vlrResto = parseFloat((cmpVlrCompra).toFixed(2) - (vlrResult).toFixed(2));
 
-
-        //vlrParcela = Math.floor(cmpVlrCompra / cmpQtdParcela);
-        //let vlrResto = 0;
-        //vlrResto = cmpVlrCompra % cmpQtdParcela ;
-        
-        //console.log(vlrParcela);
-        //console.log(vlrResto);
-
-        //let vlrResto = cmpVlrCompra % cmpQtdParcela;
-        //let vlrParcela = ((cmpVlrCompra - vlrResto) / cmpQtdParcela);
-//        
-        //console.log(cmpVlrCompra);
-        //console.log(vlrResto);
-        //console.log(vlrParcela);
-//
         let staParcela = 'A';
         
         for (let i = 1; i <= cmpQtdParcela; i++) {
@@ -466,5 +451,67 @@ module.exports = {
 
         return response.json({cncCompra});
     },
-    
+
+    async busTotCmp(request, response) {
+        let id = request.params.idUsr;
+        let status = 'A';
+        let datProcess = new Date();
+        let day = '15';
+        let year = datProcess.getFullYear();
+        let month = datProcess.getMonth() ;
+        let datVencto = new Date(year, month, day);
+
+        const serv = await connection('servidores')
+            .where('usrId', id)
+            .select('usrCartao', 'usrSalLiquido');
+
+        let nroCartao = serv[0].usrCartao;
+        let vlrLimite = ((serv[0].usrSalLiquido * 30) / 100);
+        let nro = 1;
+        
+        console.log('Antes:',nroCartao)
+        console.log('Antes',vlrLimite)
+        
+        while (nro <= 25){
+
+            const total = await connection('cmpParcelas')
+                .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
+                .join('servidores', 'usrId', 'compras.cmpServidor')
+                .join('secretarias', 'secId', 'servidores.usrSecretaria')
+                .join('orgadmin', 'orgId', 'secretarias.secOrgAdm')
+                .where('cmpParcelas.parVctParcela', datVencto)
+                .where('cmpParcelas.parStaParcela', status)
+                .where('compras.cmpServidor', id )
+                //.select(['cmpParcelas.parIdCompra','cmpParcelas.parVctParcela', 'cmpParcelas.parVlrParcela', 'compras.cmpServidor'])
+                .sum({totCmp: 'parVlrParcela'});
+
+            let result = Object.values(JSON.parse(JSON.stringify(total[0].total)));
+            console.log({result});
+
+            let totCompras = parseFloat({total});
+            
+            let vlrDisponivel = vlrLimite - totCompras;
+            
+            console.log(totCompras);
+            console.log(vlrDisponivel);
+
+            const updServ = await connection('usrSaldo')
+                .where('usrServ',nroCartao)
+                .where('usrMes',month)
+                .where('usrAno',year)
+                .update({
+                    usrVlrUsado: totCompras,
+                    usrVlrDisponivel: vlrDisponivel
+                })
+            
+            month++;
+            if (month === 13) {
+                month = 01;
+                year++;
+            } 
+            nro++;    
+        }        
+        return response.status(204).send();
+                
+    },    
 };
