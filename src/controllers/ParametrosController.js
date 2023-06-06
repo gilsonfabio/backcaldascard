@@ -19,7 +19,7 @@ module.exports = {
 
         return response.json(params);
     },  
-    /*
+   
     async updParam(request, response) {
         let id = request.params.idPar;         
         
@@ -49,7 +49,5 @@ module.exports = {
 
         return response.json(staCartao);
     },
-    */
-
-    
+        
 };
