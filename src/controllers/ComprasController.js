@@ -474,6 +474,8 @@ module.exports = {
         
         while (nro <= 25){
 
+            console.log('inicio...')
+            
             const total = await connection('cmpParcelas')
                 .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
                 .join('servidores', 'usrId', 'compras.cmpServidor')
@@ -485,15 +487,26 @@ module.exports = {
                 //.select(['cmpParcelas.parIdCompra','cmpParcelas.parVctParcela', 'cmpParcelas.parVlrParcela', 'compras.cmpServidor'])
                 .sum({totCmp: 'parVlrParcela'});
 
+            if (!total ) {
+                return response.status(400).json({ error: 'Não encontrou compras nesse periodo'});
+            }
+
             let data = JSON.stringify(total[0].totCmp);
+
             console.log(data);
 
             let totCompras = parseFloat(data);
             
             let vlrDisponivel = vlrLimite - totCompras;
             
+            console.log(month);
+            console.log(year);
             console.log(totCompras);
             console.log(vlrDisponivel);
+
+            if (totCompras === 0 ) {
+                return response.status(400).json({ error: 'Não encontrou compras nesse periodo II'});
+            }
 
             const updServ = await connection('usrSaldo')
                 .where('usrServ',nroCartao)
@@ -509,6 +522,7 @@ module.exports = {
                 month = 01;
                 year++;
             } 
+            datVencto = new Date(year, month, day);
             nro++;    
         }        
         return response.status(204).send();
