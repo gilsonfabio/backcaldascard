@@ -34,4 +34,22 @@ module.exports = {
            
         return response.status(204).send();
     },
+
+    async verCartao(request, response) {
+        let crt = request.params.nroCartao;
+        let staCartao = 'S'         
+        await connection('servidores').where('usrCartao', crt)   
+        .select('usrCartao');
+          
+        if (!crt) {
+            staCartao = 'S'
+        }else {
+            staCartao = 'N'
+        }
+
+        return response.json(staCartao);
+    },
+
+
+    
 };

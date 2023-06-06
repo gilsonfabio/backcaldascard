@@ -695,4 +695,18 @@ module.exports = {
         }    
     },
 
+    async gerNewCard(request, response) {
+        const {usrCartao, novCartao} = request.body;
+        let antCartao = usrCartao;
+
+        const serv = await connection('servidores')
+        .where('usrCartao', antCartao)
+        .update({
+            usrCartao: novCartao                      
+        });
+
+        return response.status(204).send();
+           
+    },
+
 };

@@ -153,6 +153,8 @@ routes.get('/tipos', TiposController.index);
 routes.post('/newtipo', TiposController.create);
 routes.put('/alttipo/:tipId', TiposController.updateTip);
 
+routes.get('/verCartao/:nroCartao', ParametrosController.verCartao);
+routes.post('/gerNewCard', ParametrosController.gerNewCard);
 
 routes.get('/busTotCmp/:idUsr', ComprasController.busTotCmp);
 

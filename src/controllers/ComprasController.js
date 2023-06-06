@@ -496,7 +496,9 @@ module.exports = {
             console.log(data);
 
             let totCompras = parseFloat(data);
-            
+            if (isNaN(totCompras)) {
+                totCompras = 0.00
+            }
             let vlrDisponivel = vlrLimite - totCompras;
             
             console.log(month);
@@ -504,7 +506,7 @@ module.exports = {
             console.log(totCompras);
             console.log(vlrDisponivel);
 
-            if (totCompras === 0 ) {
+            if (totCompras === null ) {
                 return response.status(400).json({ error: 'Não encontrou compras nesse periodo II'});
             }
 
