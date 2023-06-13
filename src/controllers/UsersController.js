@@ -671,6 +671,7 @@ module.exports = {
         return response.json(user);
     }, 
 
+    /*
     async delUser(request, response) {
         let id = request.params.idSrv;
 
@@ -708,5 +709,5 @@ module.exports = {
         return response.status(204).send();
            
     },
-
+    */
 };

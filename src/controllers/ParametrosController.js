@@ -9,7 +9,7 @@ module.exports = {
         .where('parId', id)
         .select('parSeqCartao');
     
-        console.log(params);
+        //console.log(params);
         
         var sequencia = parseInt(params[0].parSeqCartao) - 1; 
         await connection('parametros').where('parId', id)   
@@ -24,7 +24,7 @@ module.exports = {
         let id = request.params.idPar;         
         
         const { parSeqCartao } = request.body;
-        console.log(parSeqCartao);
+        //console.log(parSeqCartao);
 
         let datUpdate = new Date();
         await connection('parametros').where('parId', id)   
