@@ -16,7 +16,7 @@ module.exports = {
         const codUsuario = user.usrId;
         const nomeUsuario = user.usrNome;
 
-        console.log(nomeUsuario);
+        //console.log(nomeUsuario);
 
         const link = '';
         const emailEnvio = 'administrator@innvento.com.br';
@@ -36,10 +36,10 @@ module.exports = {
         sgMail
           .send(msg)
           .then(() => {
-            console.log('Email sent')
+            //console.log('Email sent')
           })
         .catch((error) => {
-            console.error(error)
+            //console.error(error)
         })     
         
         return response.json(user);  
@@ -86,8 +86,8 @@ module.exports = {
         let $seg_alfa = $_seg;
         let seguranca = $pri_letra + $seg_letra + $ano_alfa + $min_alfa + $seg_alfa;
          
-        console.log(nomeUsuario);
-        console.log(seguranca);
+        //console.log(nomeUsuario);
+        //console.log(seguranca);
         
         const updServ = await connection('servidores')
         .where('usrId', codUsuario) 
@@ -113,10 +113,10 @@ module.exports = {
         sgMail
           .send(msg)
           .then(() => {
-            console.log('Email sent')
+            //console.log('Email sent')
           })
         .catch((error) => {
-            console.error(error)
+            //console.error(error)
         })     
         
         return response.json(user);  
@@ -133,8 +133,8 @@ module.exports = {
             return response.status(400).json({ error: 'Não encontrou convênio com este ID'});
         } 
 
-        const codConvenio = conv.cnvId;
-        const nomeFantasia = conv.cnvNomFantasia;
+        //const codConvenio = conv.cnvId;
+        //const nomeFantasia = conv.cnvNomFantasia;
          
         const arr_alfa = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","U","V","W","X","Y","Z","!","@","$","%","&","*"];
         var data = new Date();
@@ -151,8 +151,8 @@ module.exports = {
         let $seg_alfa = $_seg;
         let seguranca = $pri_letra + $seg_letra + $ano_alfa + $min_alfa + $seg_alfa;
          
-        console.log(nomeFantasia);
-        console.log(seguranca);
+        //console.log(nomeFantasia);
+        //console.log(seguranca);
         
         const updConv = await connection('convenios')
         .where('cnvId', codConvenio) 
@@ -178,10 +178,10 @@ module.exports = {
         sgMail
           .send(msg)
           .then(() => {
-            console.log('Email sent')
+            //console.log('Email sent')
           })
         .catch((error) => {
-            console.error(error)
+            //console.error(error)
         })     
         
         return response.json(conv);  
@@ -217,8 +217,8 @@ module.exports = {
         let $seg_alfa = $_seg;
         let seguranca = $pri_letra + $seg_letra + $ano_alfa + $min_alfa + $seg_alfa;
          
-        console.log(nomeUsuario);
-        console.log(seguranca);
+        //console.log(nomeUsuario);
+        //console.log(seguranca);
         
         const updAdm = await connection('administrator')
         .where('admId', codUsuario) 
@@ -244,10 +244,10 @@ module.exports = {
         sgMail
           .send(msg)
           .then(() => {
-            console.log('Email sent')
+            //console.log('Email sent')
           })
         .catch((error) => {
-            console.error(error)
+            //console.error(error)
         })     
         
         return response.json(admin);  

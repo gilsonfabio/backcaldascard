@@ -134,7 +134,7 @@ routes.put('/altparametros/:idPar', ParametrosController.updParam);
 routes.get('/usrAnterior/:cpfAnt', UsersController.usrAnterior);
 routes.get('/informacoes/:idUsr', UsersController.searchInf);
 routes.get('/newinformacao/', UsersController.createInf);
-routes.get('/altinformacao/:idUsr/:idInf', UsersController.updInfor);
+routes.put('/altinformacao/:idUsr/:idInf', UsersController.updInfor);
 routes.get('/pdfSrvContrato/:srvId', UsersController.srvContratos);
 routes.get('/parcelas/:tipUser', ParcelasController.parcelas);
 routes.get('/pdfCmpEmissao', PdfsController.pdfCmpEmissao);
