@@ -26,7 +26,7 @@ module.exports = {
         var nome_arquivo = 'arquivo.txt'
         console.log(nome_arquivo);
         var separacao = ';' 
-        for (compra of compras) {
+        for (let compra of compras) {
             console.log(`${compra['parIdCompra']}`)
             const data = `${compra['usrMatricula']}` + ';' + `${compra['usrNome']}`  + ';' + `${compra['parVlrParcela']}` + ';'
             fs.appendFileSync(nome_arquivo, data + '\n', (err) => {
