@@ -21,7 +21,7 @@ module.exports = {
         const link = '';
         const emailEnvio = 'administrator@innvento.com.br';
 
-        const apiKey = "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";
+        const apiKey = process.env.SENDGRID_API_KEY;
         const sgMail = require('@sendgrid/mail');
 
         sgMail.setApiKey(apiKey)
