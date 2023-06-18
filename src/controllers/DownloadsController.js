@@ -6,8 +6,10 @@ module.exports = {
         let final = request.params.datInicial;
         let idOrg = request.params.orgId;
 
-        let year = inicio.getFullYear();
-        let month = inicio.getMonth() ;
+        let dtAtual = new Date(inicio);  
+        let year = dtAtual.getFullYear();
+        let month = dtAtual.getMonth() + 1;
+        let vlrLimite = 0.00;
 
         const saldo = await connection('usrSaldo')
             .join('servidores', 'usrCartao', 'usrSaldo.usrServ')
@@ -16,6 +18,7 @@ module.exports = {
             .where('usrMes',month)
             .where('usrAno',year)
             .where('orgId', idOrg)
+            .where('usrVlrUsado', '>', vlrLimite)
             .select(['servidores.usrMatricula', 'servidores.usrNome','usrSaldo.usrVlrUsado',])
        
         return response.json(saldo);  
