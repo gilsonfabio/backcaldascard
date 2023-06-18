@@ -19,7 +19,6 @@ const ParcelasController = require('./controllers/ParcelasController');
 const DownloadsController = require('./controllers/DownloadsController');
 const BairrosController = require('./controllers/BairrosController');
 const TiposController = require('./controllers/TiposController');
-const { Router } = require('express');
 
 routes.get('/', (request, response) => {
     response.json({
@@ -39,7 +38,7 @@ routes.get('/verifUser/:cartao', UsersController.verifUser);
 routes.put('/altservidor/:idSrv', UsersController.updServidor);
 routes.get('/classUser/:search', UsersController.classUser);
 routes.get('/cmpLibera/:cartao', UsersController.liberaUsr);
-routes.put('/deletaUsr/:idSrv', UsersController.delUser);
+//routes.put('/deletaUsr/:idSrv', UsersController.delUser);
 
 routes.get('api/admin', AdminController.index);
 routes.get('/loginAdm/:email/:password', AdminController.signIn);
