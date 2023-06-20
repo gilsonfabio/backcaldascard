@@ -342,6 +342,7 @@ module.exports = {
         .where('parVctParcela', datSearch)
         .where('parStaParcela', status)
         .where('orgId', idOrg)
+        .where('parStaParcela', status)
         .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
         .join('servidores', 'usrId', 'compras.cmpServidor')
         .join('secretarias', 'secId', 'servidores.usrSecretaria')

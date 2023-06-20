@@ -23,5 +23,19 @@ module.exports = {
        
         return response.json(saldo);  
         
-    }          
+    },
+    
+    async corSaldo (request, response) {
+        //let datSearch = request.params.datVencto;
+        let status = 'A';
+
+        const compras = await connection('cmpParcelas')
+            .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
+            .join('servidores', 'usrId', 'compras.cmpServidor')
+            .where('parStaParcela', status)
+            .select(['cmpParcelas.*', 'compras.cmpEmissao', 'compras.cmpServidor', 'compras.cmpConvenio', 'compras.cmpQtdParcela', 'servidores.usrNome', 'servidores.usrCartao']);
+
+        return response.json(compras);
+
+    },
 };
