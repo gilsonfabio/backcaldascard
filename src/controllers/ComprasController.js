@@ -339,14 +339,13 @@ module.exports = {
         let idOrg = request.params.orgao;
         let status = 'A';
         const compras = await connection('cmpParcelas')
-        .where('parVctParcela', datSearch)
-        .where('parStaParcela', status)
-        .where('orgId', idOrg)
-        .where('parStaParcela', status)
         .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
         .join('servidores', 'usrId', 'compras.cmpServidor')
         .join('secretarias', 'secId', 'servidores.usrSecretaria')
         .join('orgadmin', 'orgId', 'secretarias.secOrgAdm')
+        .where('parVctParcela', datSearch)
+        .where('parStaParcela', status)
+        .where('orgId', idOrg)
         .orderBy('parVctParcela')
         .select(['cmpParcelas.*', 'compras.cmpEmissao', 'compras.cmpServidor', 'compras.cmpConvenio', 'compras.cmpQtdParcela', 'servidores.usrNome', 'secretarias.secDescricao', 'orgadmin.orgId', 'orgadmin.orgDescricao']);
 

@@ -147,6 +147,7 @@ routes.get('/pdfEmiCmpSrv:datInicial/:datFinal/:srvId', PdfsController.pdfEmiCmp
 routes.get('/pdfExtAdm/:dataInicial', PdfsController.pdfExtAdm);
 
 routes.get('/downloadTxt/:datInicial/:orgId', DownloadsController.downTexto);
+routes.get('/relFecTxt/:datInicial/:orgId', DownloadsController.relFecTxt);
 
 routes.get('/tipos', TiposController.index);
 routes.post('/newtipo', TiposController.create);

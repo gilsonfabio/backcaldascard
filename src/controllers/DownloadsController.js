@@ -38,4 +38,34 @@ module.exports = {
         return response.json(compras);
 
     },
+
+    async relFecTxt (request, response) {
+        let inicio = request.params.datInicial;
+        let final = request.params.datInicial;
+        let idOrg = request.params.orgId;
+
+        let dtAtual = new Date(inicio);  
+        let year = dtAtual.getFullYear();
+        let month = dtAtual.getMonth() + 1;
+        let vlrLimite = 0.00;
+
+        //console.log(inicio);
+        //console.log(year);
+        //console.log(month);
+        //console.log(idOrg);
+
+        const saldo = await connection('usrSaldo')
+            .join('servidores', 'usrCartao', 'usrSaldo.usrServ')
+            .join('secretarias', 'secId', 'servidores.usrSecretaria')
+            .join('orgadmin', 'orgId', 'secretarias.secOrgAdm')
+            .where('usrMes',month)
+            .where('usrAno',year)
+            .where('orgId', idOrg)
+            .where('usrVlrUsado', '>', vlrLimite)
+            .select(['servidores.usrId','servidores.usrMatricula', 'servidores.usrNome','usrSaldo.usrVlrUsado',])
+       
+        //console.log(saldo);
+        return response.json(saldo);  
+        
+    },
 };
