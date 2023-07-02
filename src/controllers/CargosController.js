@@ -42,6 +42,7 @@ module.exports = {
         let descricao = request.params.search;
         const cargo = await connection('cargos')
         .where('crgDescricao','>=', descricao)
+        .orderBy('crgDescricao')
         .select('*');
 
         return response.json(cargo);

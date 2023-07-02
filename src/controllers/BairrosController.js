@@ -46,6 +46,7 @@ module.exports = {
 
         const bairro = await connection('bairros')
         .where('baiDescricao','>=', descricao)
+        .orderBy('baiDescricao')
         .select('*');
 
         return response.json(bairro);
