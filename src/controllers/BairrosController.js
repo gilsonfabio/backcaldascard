@@ -40,4 +40,14 @@ module.exports = {
            
         return response.status(204).send();
     },
+
+    async busBairro (request, response) {
+        let descricao = request.params.search;
+
+        const bairro = await connection('bairros')
+        .where('baiDescricao','>=', descricao)
+        .select('*');
+
+        return response.json(bairro);
+    },    
 };

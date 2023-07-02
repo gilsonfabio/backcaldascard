@@ -92,10 +92,13 @@ routes.get('/cargos', CargosController.index);
 routes.post('/newcargo', CargosController.create);
 routes.put('/altcargo/:idCrg', CargosController.updCargo);
 routes.get('/searchCargo/:idCrg', CargosController.searchCargo);
+routes.get('/busCargo/:search', CargosController.busCargo);
+
 routes.get('/bairros', BairrosController.index);
 routes.post('/newbairro', BairrosController.create);
 routes.put('/altbairro/:idBai', BairrosController.updBairro);
 routes.get('/searchBairro/:idBai', BairrosController.searchBairro);
+routes.get('/busBairro/:search', BairrosController.busBairro);
 
 routes.get('/compras', ComprasController.index);
 routes.post('/newcompra', ComprasController.create);

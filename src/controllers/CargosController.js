@@ -37,4 +37,13 @@ module.exports = {
            
         return response.status(204).send();
     },
+
+    async busCargo (request, response) {
+        let descricao = request.params.search;
+        const cargo = await connection('cargos')
+        .where('crgDescricao','>=', descricao)
+        .select('*');
+
+        return response.json(cargo);
+    }, 
 };
