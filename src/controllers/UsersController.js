@@ -55,7 +55,7 @@ module.exports = {
         if (dia > 15) {
             month++;
             if (month === 13) {
-                month = 01;
+                month = 1;
                 year++;
             }
         }
@@ -110,7 +110,7 @@ module.exports = {
         if (dia > 15) {
             month++;
             if (month === 13) {
-                month = 01;
+                month = 1;
                 year++;
             }
         }
@@ -670,6 +670,21 @@ module.exports = {
         //console.log(user);
         return response.json(user);
     }, 
+
+    async mosServ(request, response) {
+        let id = request.params.cpfSrv;
+
+        const user = await connection('servidores')
+            .where('usrCpf', id)
+            .select('usrId', 'usrNome')
+            .first();
+          
+        if (!user) {
+            return response.status(400).json({ error: 'Não encontrou servidor com este ID'});
+        } 
+
+        return response.json(user);
+    },
 
     /*
     async delUser(request, response) {

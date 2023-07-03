@@ -245,5 +245,21 @@ module.exports = {
            
         return response.status(204).send();
     },
+
+    async busConv (request, response) {
+        let id = request.params.cnpjCnv;
+        let status = "A";
+
+        //console.log('Search Convenio: ', id);
+
+        const convenio = await connection('convenios')
+        .where('cnvCpfCnpj', id)
+        .where('cnvStatus', status)
+        .select('*');
+
+        //console.log(convenio);
+
+        return response.json(convenio);
+    },
     
 };

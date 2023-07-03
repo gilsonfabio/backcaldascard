@@ -39,6 +39,7 @@ routes.put('/altservidor/:idSrv', UsersController.updServidor);
 routes.get('/classUser/:search', UsersController.classUser);
 routes.get('/cmpLibera/:cartao', UsersController.liberaUsr);
 //routes.put('/deletaUsr/:idSrv', UsersController.delUser);
+routes.get('/mosServ/:cpfSrv', UsersController.mosServ);
 
 routes.get('api/admin', AdminController.index);
 routes.get('/loginAdm/:email/:password', AdminController.signIn);
@@ -67,6 +68,7 @@ routes.put('/delAtividade/:idAtv', AtivController.deleteAtiv);
 
 routes.get('/convenios', ConveniosController.index);                                                     
 routes.get('/searchConv/:idCnv', ConveniosController.searchConv);
+routes.get('/busConv/:cnpjCnv', ConveniosController.busConv);
 routes.post('/newconvenio', ConveniosController.create);
 routes.put('/altconvenio/:idCnv', ConveniosController.updateConv);
 routes.put('/delconvenio/:idCnv', ConveniosController.deleteConv);
