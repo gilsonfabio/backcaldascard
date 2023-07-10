@@ -599,4 +599,113 @@ module.exports = {
         return response.json(totaliza);
     }, 
 
+    async totConvenios (request, response) {
+        let inicio = request.params.datInicial;
+        let datProcess = new Date(inicio);
+        let day = '15';
+        let year = datProcess.getFullYear();
+        let month = datProcess.getMonth() + 1;
+        let datVencto = new Date(year, month, day);
+        
+        //console.log('Dia:',day);
+        //console.log('Mes:',month);
+        //console.log('Ano:',year);
+        //console.log('Data Vencimento:',datVencto);    
+
+        //let cnt = 1;
+        //while(cnt <= 25) {
+            let status = 'A';
+            let i = 1 
+            while(i < 24) {
+
+                //console.log('Convenio:', i);
+
+                const cnv = await connection('convenios')
+                .join('atividades', 'atvId', 'convenios.cnvAtividade')
+                .where('cnvId',i)
+                .select(['convenios.cnvId','atividades.atvTaxAdm']);
+            
+                if (cnv) {
+                    //console.log(cnv);
+
+                    let taxa = parseInt(cnv[0].atvTaxAdm)
+
+                    if (cnv) {                                
+                        const total = await connection('cmpParcelas')
+                        .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
+                        .join('convenios', 'cnvId', 'compras.cmpConvenio')
+                        .where('cmpParcelas.parVctParcela', datVencto)
+                        .where('cmpParcelas.parStaParcela', status)
+                        .where('compras.cmpConvenio', i )
+                        .sum({totCmp: 'parVlrParcela'});
+
+                        //console.log(total[0].totCmp);
+
+                        let data = JSON.stringify(total[0].totCmp);
+                        let totCompras = parseFloat(data);
+                        if (isNaN(totCompras)) {
+                            totCompras = 0.00
+                        }
+                        
+                        let perSist = 0;
+                        let auxParcela = 0.00;
+                        let auxTaxa = 0.00;
+                        let auxLiquido = 0.00; 
+                        let auxSistema = 0.00;
+
+                        if (totCompras > 0) {
+
+                            if (taxa > 0) {
+                                perSist = 25;
+                                auxParcela = totCompras;
+                                auxTaxa = ((auxParcela * taxa) / 100);
+                                auxLiquido = auxParcela - auxTaxa; 
+                                auxSistema = ((auxTaxa * perSist) / 100);
+                            }else {
+                                perSist = 0;
+                                auxTaxa = 0;
+                                auxParcela = totCompras;
+                                auxLiquido = totCompras; 
+                                auxSistema = 0.00;
+                            }   
+
+                            year = datVencto.getFullYear();
+                            month = datVencto.getMonth() + 1;
+                            
+                            //console.log('Mes:',month);
+                            //console.log('Ano:',year);
+                            //console.log('Convênio:',i);
+                            //console.log('Total Venda:',auxParcela);
+                            //console.log('Taxa:',auxTaxa);
+                            //console.log('Tot. Liquido:', auxLiquido);
+                            //console.log('Tot. Sistema:', auxSistema);
+
+                            const [totaliza] = await connection('totVdaCnv').insert({
+                                tcnvId: i,
+                                tcnvAno: year,
+                                tcnvMes: month,
+                                tcnvVlrTotal: auxParcela,
+                                tcnvVlrTaxa: auxTaxa,
+                                tcnvVlrLiquido: auxLiquido,
+                                tcnvVlrSistema: auxSistema,                
+                            });
+                        }
+                    }    
+                }
+                i++
+            //}
+            //month++;
+            //if (month === 13) {
+            //    year++
+            //    month = 1
+            //}
+            
+            //datVencto = new Date(year, month, day);
+            //cnt++;
+            //console.log('Data Vencimento:', datVencto);
+        }    
+
+       return response.status(200).json({ error: 'Totalizador processado com sucesso!'});
+    },                    
+
 };

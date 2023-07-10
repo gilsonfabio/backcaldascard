@@ -362,7 +362,7 @@ module.exports = {
         .sum({totCmp : 'parVlrParcela'});
 
         return response.json(total);
-
+        
     },   
 
     async totCmpOrgao (request, response) {

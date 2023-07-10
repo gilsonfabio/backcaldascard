@@ -114,6 +114,8 @@ routes.put('/cncCompra/:idCmp', ComprasController.cncCompra);
 routes.get('/findCompras/:datVencto', ComprasController.cmpVencto);
 routes.get('/totCompras/:datVencto', ComprasController.totCompras);
 
+routes.get('/totConvenios/:datInicial', PdfsController.totConvenios);
+
 routes.get('/cmpPeriodo/:datInicio/:datFinal/:convenio/:servidor', PdfsController.cmpPeriodo);
 routes.get('/somCompras/:datInicio/:datFinal/:convenio/:servidor', PdfsController.somCompras);
 routes.get('/vctPeriodo/:datInicio/:datFinal/:convenio/:servidor', PdfsController.vctPeriodo);
