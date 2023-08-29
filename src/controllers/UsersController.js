@@ -199,7 +199,7 @@ module.exports = {
         const user = await connection('servidores')
             .where('usrEmail', email)
             .where('usrPassword', encodedVal)
-            .select('usrId', 'usrNome')
+            .select('usrId', 'usrNome', 'usrCartao')
             .first();
           
         if (!user) {
@@ -217,7 +217,7 @@ module.exports = {
         const user = await connection('servidores')
             .where('usrEmail', email)
             .where('usrPassword', encodedVal)
-            .select('usrId', 'usrNome')
+            .select('usrId', 'usrNome', 'usrCartao')
             .first();
           
         if (!user) {
@@ -687,7 +687,7 @@ module.exports = {
     },
 
     async dadServ(request, response) {
-        let id = request.params.idSrv;
+        let id = request.params.carServ;
         
         let datProcess = new Date();
         let year = datProcess.getFullYear();
@@ -701,14 +701,18 @@ module.exports = {
             }
         }    
 
-        const user = await connection('servidores')
-            .join('usrSaldo', 'usrServ','=', 'servidores.usrId', 'and', 'usrMes', '=', month, 'and', 'usrAno', '=', year)
-            .where('usrCartao', id)
-            .select(['servidores.usrId', 'servidores.usrNome', 'servidores.usrTipContrato', 'servidores.usrStatus', 'saldo.usrServ', 'saldo.usrMes', 'saldo.usrAno', 'saldo.usrVlrDisponivel'])        
+        const user = await connection('usrSaldo')            
+            .where('usrServ', id)
+            .where('usrMes',month)
+            .where('usrAno',year)
+            .join('servidores', 'usrCartao', 'usrSaldo.usrServ')
+            .select(['servidores.usrId', 'servidores.usrNome', 'servidores.usrTipContrato', 'servidores.usrStatus','servidores.usrCartao', 'servidores.usrMatricula', 'usrSaldo.usrServ', 'usrSaldo.usrMes', 'usrSaldo.usrAno', 'usrSaldo.usrVlrDisponivel'])        
 
         if (!user) {
             return response.status(400).json({ error: 'Não encontrou servidor com este ID'});
         } 
+
+        //console.log(user)
 
         return response.json(user);
     },
