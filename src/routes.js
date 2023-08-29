@@ -40,6 +40,7 @@ routes.get('/classUser/:search', UsersController.classUser);
 routes.get('/cmpLibera/:cartao', UsersController.liberaUsr);
 //routes.put('/deletaUsr/:idSrv', UsersController.delUser);
 routes.get('/mosServ/:cpfSrv', UsersController.mosServ);
+routes.get('/dadServ/:idSrv', UsersController.dadServ);
 
 routes.get('api/admin', AdminController.index);
 routes.get('/loginAdm/:email/:password', AdminController.signIn);

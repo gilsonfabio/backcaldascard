@@ -686,6 +686,33 @@ module.exports = {
         return response.json(user);
     },
 
+    async dadServ(request, response) {
+        let id = request.params.idSrv;
+        
+        let datProcess = new Date();
+        let year = datProcess.getFullYear();
+        let month = datProcess.getMonth();
+        let day = datProcess.getDate();
+        if (day > 15 ) {
+            month = month + 1;
+            if (month === 13) {
+                month = 1;
+                year = year + 1; 
+            }
+        }    
+
+        const user = await connection('servidores')
+            .join('usrSaldo', 'usrServ','=', 'servidores.usrId', 'and', 'usrMes', '=', month, 'and', 'usrAno', '=', year)
+            .where('usrCartao', id)
+            .select(['servidores.usrId', 'servidores.usrNome', 'servidores.usrTipContrato', 'servidores.usrStatus', 'saldo.usrServ', 'saldo.usrMes', 'saldo.usrAno', 'saldo.usrVlrDisponivel'])        
+
+        if (!user) {
+            return response.status(400).json({ error: 'Não encontrou servidor com este ID'});
+        } 
+
+        return response.json(user);
+    },
+
     /*
     async delUser(request, response) {
         let id = request.params.idSrv;
