@@ -691,8 +691,9 @@ module.exports = {
         
         let datProcess = new Date();
         let year = datProcess.getFullYear();
-        let month = datProcess.getMonth();
-        let day = datProcess.getDate();
+        let month = datProcess.getMonth() + 1;
+        let day = parseInt(datProcess.getDate());
+        
         if (day > 15 ) {
             month = month + 1;
             if (month === 13) {
@@ -700,6 +701,10 @@ module.exports = {
                 year = year + 1; 
             }
         }    
+
+        //console.log(day);
+        //console.log(month);
+        //console.log(year);
 
         const user = await connection('usrSaldo')            
             .where('usrServ', id)
