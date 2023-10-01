@@ -437,14 +437,13 @@ module.exports = {
             usrNasConjuge, 
             usrObsBloqueio,
             usrPai,
-            usrMae,
-            usrPassword } = request.body;
+            usrMae } = request.body;
         
         let datUpdate = new Date();
         //var datNascimento = new Date(usrNascimento);
         //var datAdmissao = new Date(usrAdmissao);
         //var datNasConjuge = new Date(usrNasConjuge);
-        var senha = crypto.createHash('md5').update(usrPassword).digest('hex');
+        //var senha = crypto.createHash('md5').update(usrPassword).digest('hex');
         await connection('servidores').where('usrId', id)   
         .update({
             usrNome,
@@ -477,7 +476,23 @@ module.exports = {
             usrNasConjuge,
             usrObsBloqueio,
             usrPai,
-            usrMae,
+            usrMae
+        });
+           
+        return response.status(204).send();
+    },
+
+    async updPermissao(request, response) {
+        let id = request.params.idSrv;         
+        const { usrPassword } = request.body;
+        
+        let datUpdate = new Date();
+        //var datNascimento = new Date(usrNascimento);
+        //var datAdmissao = new Date(usrAdmissao);
+        //var datNasConjuge = new Date(usrNasConjuge);
+        var senha = crypto.createHash('md5').update(usrPassword).digest('hex');
+        await connection('servidores').where('usrId', id)   
+        .update({
             usrPassword: senha
         });
            
