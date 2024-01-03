@@ -6,7 +6,7 @@ const nodemailer = require("nodemailer");
 
 module.exports = {   
     async index (request, response) {
-        let datSearch = moment('2022-01-15').format('YYYY-MM-DD');
+        let datSearch = moment('2023-06-15').format('YYYY-MM-DD');
         let status = 'A';
         //const votHora = moment().format('hh:mm:ss');
 
@@ -77,6 +77,17 @@ module.exports = {
         const qtdParc = request.body.cmpQtdParcela;
         const vlrCompra = request.body.cmpVlrCompra;
         
+        const compra = await connection('compras')
+            .where('cmpServidor', servidor)
+            .where('cmpEmissao', emiCompra)
+            .where('cmpVlrCompra', vlrCompra)
+            .where('cmpStatus', 'A')
+            .select('*');
+
+        if (compra) {
+            return response.status(403).json({ error: 'Compra já confirmada!'});
+        }     
+
         const [cmpId] = await connection('compras').insert({
             cmpEmissao, 
             cmpHorEmissao, 

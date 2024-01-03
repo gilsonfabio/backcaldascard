@@ -63,6 +63,7 @@ module.exports = {
             .where('orgId', idOrg)
             .where('usrVlrUsado', '>', vlrLimite)
             .select(['servidores.usrId','servidores.usrMatricula', 'servidores.usrNome','usrSaldo.usrVlrUsado',])
+            .orderBy('servidores.usrNome');
        
         //console.log(saldo);
         return response.json(saldo);  

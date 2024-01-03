@@ -196,7 +196,8 @@ module.exports = {
             .join('convenios', 'cnvId', 'compras.cmpConvenio')
             .join('secretarias', 'secId', 'servidores.usrSecretaria')
             .join('orgadmin', 'orgId', 'secretarias.secOrgAdm')
-            .select(['cmpParcelas.*', 'compras.cmpEmissao', 'compras.cmpServidor', 'compras.cmpConvenio', 'servidores.usrNome', 'convenios.cnvNomFantasia','secretarias.secOrgAdm', 'orgadmin.orgId']);
+            .select(['cmpParcelas.*', 'compras.cmpEmissao', 'compras.cmpServidor', 'compras.cmpConvenio', 'servidores.usrNome', 'convenios.cnvNomFantasia','secretarias.secOrgAdm', 'orgadmin.orgId'])
+            .orderBy('servidores.usrNome');
              
         //console.log(vctcompras);
            
