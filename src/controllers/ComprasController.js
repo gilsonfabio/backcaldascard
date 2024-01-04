@@ -84,26 +84,23 @@ module.exports = {
             .where('cmpStatus', 'A')
             .select('*');
 
-        if (compra) {
-            return response.status(403).json({ error: 'Compra já confirmada!'});
-        }     
+        if (!compra) {
+            const [cmpId] = await connection('compras').insert({
+                cmpEmissao, 
+                cmpHorEmissao, 
+                cmpConvenio, 
+                cmpQtdParcela, 
+                cmpVlrCompra, 
+                cmpServidor, 
+                cmpCodSeguranca, 
+                cmpStatus        
+            });
 
-        const [cmpId] = await connection('compras').insert({
-            cmpEmissao, 
-            cmpHorEmissao, 
-            cmpConvenio, 
-            cmpQtdParcela, 
-            cmpVlrCompra, 
-            cmpServidor, 
-            cmpCodSeguranca, 
-            cmpStatus        
-        });
-
-        let datProcess = new Date();
-        let year = datProcess.getFullYear();
-        let month = datProcess.getMonth();
-        let day = datProcess.getDate();
-        let dayVct = 15;    
+            let datProcess = new Date();
+            let year = datProcess.getFullYear();
+            let month = datProcess.getMonth();
+            let day = datProcess.getDate();
+            let dayVct = 15;    
 //
 //        console.log(convenio);
 //        console.log(datProcess);
@@ -112,187 +109,129 @@ module.exports = {
 //        console.log('Dia:', day);
 //        console.log('passou na compra')
 //
-        const horProcess = moment().format('hh:mm:ss');        
-        const idCompra = cmpId;    
+            const horProcess = moment().format('hh:mm:ss');        
+            const idCompra = cmpId;    
         
-        let vlrParcela = 0.00;
-        vlrParcela = parseFloat((cmpVlrCompra).toFixed(2) / cmpQtdParcela);
-        let vlrResult = 0.00;
-        vlrResult = parseFloat((vlrParcela).toFixed(2) * cmpQtdParcela);
-        let vlrResto = 0.00;
-        vlrResto = parseFloat((cmpVlrCompra).toFixed(2) - (vlrResult).toFixed(2));
+            let vlrParcela = 0.00;
+            vlrParcela = parseFloat((cmpVlrCompra).toFixed(2) / cmpQtdParcela);
+            let vlrResult = 0.00;
+            vlrResult = parseFloat((vlrParcela).toFixed(2) * cmpQtdParcela);
+            let vlrResto = 0.00;
+            vlrResto = parseFloat((cmpVlrCompra).toFixed(2) - (vlrResult).toFixed(2));
 
-        let staParcela = 'A';
+            let staParcela = 'A';
         
-        for (let i = 1; i <= cmpQtdParcela; i++) {
-            let parcela = i;
+            for (let i = 1; i <= cmpQtdParcela; i++) {
+                let parcela = i;
 
-            if (parcela === 1 ) {
-                if (day > 15 ) {
+                if (parcela === 1 ) {
+                    if (day > 15 ) {
+                        month = month + 1;
+                        if (month === 13) {
+                            month = 1;
+                            year = year + 1; 
+                        }
+                    }    
+                }else {
                     month = month + 1;
                     if (month === 13) {
                         month = 1;
                         year = year + 1; 
                     }
-                }    
-            }else {
-                month = month + 1;
-                if (month === 13) {
-                    month = 1;
-                    year = year + 1; 
                 }
-            }
 
-            let vctParcela = new Date(year,month,dayVct);
+                let vctParcela = new Date(year,month,dayVct);
             
             //console.log('Vencimento parcela:',vctParcela);
 
-            let anoParc = vctParcela.getFullYear();
-            let mesParc = vctParcela.getMonth() + 1;
+                let anoParc = vctParcela.getFullYear();
+                let mesParc = vctParcela.getMonth() + 1;
 
-            let vlrProcess = 0;
-            if (i === 1 ) {
-               vlrProcess = vlrParcela + vlrResto; 
-            }else {
-               vlrProcess = vlrParcela; 
-            }
+                let vlrProcess = 0;
+                if (i === 1 ) {
+                    vlrProcess = vlrParcela + vlrResto; 
+                }else {
+                    vlrProcess = vlrParcela; 
+                }
             
-            const [parId] = await connection('cmpParcelas').insert({
-                parIdCompra: idCompra,
-                parNroParcela: parcela,
-                parVctParcela: vctParcela,
-                parVlrCompra: vlrProcess,
-                parVlrParcela: vlrProcess,
-                parStaParcela: staParcela,                
-            });
+                const [parId] = await connection('cmpParcelas').insert({
+                    parIdCompra: idCompra,
+                    parNroParcela: parcela,
+                    parVctParcela: vctParcela,
+                    parVlrCompra: vlrProcess,
+                    parVlrParcela: vlrProcess,
+                    parStaParcela: staParcela,                
+                });
 
 //            console.log('passou na parcela') 
 
-            const cnv = await connection('convenios')
-            .where('cnvId',convenio)
-            .join('atividades', 'atvId', 'convenios.cnvAtividade')
-            .select(['cnvId','atividades.atvTaxAdm']);
+                const cnv = await connection('convenios')
+                .where('cnvId',convenio)
+                .join('atividades', 'atvId', 'convenios.cnvAtividade')
+                .select(['cnvId','atividades.atvTaxAdm']);
             
-            let taxa = parseInt(cnv[0].atvTaxAdm)
+                let taxa = parseInt(cnv[0].atvTaxAdm)
             
-            let perSist = 25;
-            let auxParcela = vlrProcess;
-            let auxTaxa = ((auxParcela * taxa) / 100);
-            let auxLiquido = auxParcela - auxTaxa; 
-            let auxSistema = ((auxTaxa * perSist) / 100);
+                let perSist = 25;
+                let auxParcela = vlrProcess;
+                let auxTaxa = ((auxParcela * taxa) / 100);
+                let auxLiquido = auxParcela - auxTaxa; 
+                let auxSistema = ((auxTaxa * perSist) / 100);
 
 //            console.log('mes totalizador de vendas convenio:', mesParc);
 
 
-            const updConv = await connection('totVdaCnv')
-                .where('tcnvId',convenio)
-                .where('tcnvMes',mesParc)
-                .where('tcnvAno',anoParc)
-                .increment({tcnvVlrTotal: auxParcela})
-                .increment({tcnvVlrTaxa: auxTaxa})
-                .increment({tcnvVlrLiquido: auxLiquido})
-                .increment({tcnvVlrSistema: auxSistema});
+                const updConv = await connection('totVdaCnv')
+                    .where('tcnvId',convenio)
+                    .where('tcnvMes',mesParc)
+                    .where('tcnvAno',anoParc)
+                    .increment({tcnvVlrTotal: auxParcela})
+                    .increment({tcnvVlrTaxa: auxTaxa})
+                    .increment({tcnvVlrLiquido: auxLiquido})
+                    .increment({tcnvVlrSistema: auxSistema});
 
-            if(!updConv) {
-                const [totaliza] = await connection('totVdaCnv').insert({
-                    tcnvId: convenio,
-                    tcnvAno: anoParc,
-                    tcnvMes: mesParc,
-                    tcnvVlrTotal: auxParcela,
-                    tcnvVlrTaxa: auxTaxa,
-                    tcnvVlrLiquido: auxLiquido,
-                    tcnvVlrSistema: auxSistema,                
-                });
-            }
+                if(!updConv) {
+                    const [totaliza] = await connection('totVdaCnv').insert({
+                        tcnvId: convenio,
+                        tcnvAno: anoParc,
+                        tcnvMes: mesParc,
+                        tcnvVlrTotal: auxParcela,
+                        tcnvVlrTaxa: auxTaxa,
+                        tcnvVlrLiquido: auxLiquido,
+                        tcnvVlrSistema: auxSistema,                
+                    });
+                }
 
 //            console.log('totalizou convenio')
 
-            const usr = await connection('servidores')
-            .where('usrId',servidor)
-            .select('usrCartao', 'usrEmail', 'usrNome');
+                const usr = await connection('servidores')
+                .where('usrId',servidor)
+                .select('usrCartao', 'usrEmail', 'usrNome');
 
-            let nroCartao = usr[0].usrCartao;            
+                let nroCartao = usr[0].usrCartao;            
 //            
 //            console.log('Cartão:',nroCartao);
 //            console.log('mes:',mesParc);
 //            console.log('ano:',anoParc);
 //
-            const updServ = await connection('usrSaldo')
-            .where('usrServ',nroCartao)
-            .where('usrMes',mesParc)
-            .where('usrAno',anoParc)
-            .increment({usrVlrUsado: vlrParcela})
-            .decrement({usrVlrDisponivel: vlrParcela});        
+                const updServ = await connection('usrSaldo')
+                .where('usrServ',nroCartao)
+                .where('usrMes',mesParc)
+                .where('usrAno',anoParc)
+                .increment({usrVlrUsado: vlrParcela})
+                .decrement({usrVlrDisponivel: vlrParcela});        
 
-//            console.log('atualizou saldo servidor')
-        }
+            }
 
-/*
-        const conv = await connection('convenios')
-        .where('cnvId', cmpConvenio)
-        .select('cnvEmail', 'cnvNomFantasia')
-        .first();
-
-        if (!conv) {
-            return response.status(400).json({ error: 'Não encontrou usuario com este email'});
+            return response.status(200).send();
+               
+        }else {
+            return response.status(403).json({ error: 'Compra já confirmada!'});
         } 
-
-        let emailConv = conv.cnvEmail;
-
-        const serv = await connection('servidores')
-        .where('usrId', cmpServidor)
-        .select('usrEmail', 'usrNome')
-        .first();
-        
-        const emailUsuario = serv.usrEmail;
-        const nomServidor = serv.usrNome;
-
-        let admEmail = process.env.EMAIL_USER;
-        let hostEmail = process.env.EMAIL_HOST;
-        let portEmail =  process.env.EMAIL_PORT;
-
-        const transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: process.env.EMAIL_PORT,
-            secure: true,
-            auth: {
-              user: process.env.EMAIL_USER,
-              pass: process.env.EMAIL_PASS,
-            },
-            tls: {
-              rejectUnauthorized: false,
-            },
-        });
-
-        const mailSent = await transporter.sendMail({
-            text: `Confirmação de Compra`,
-            subject: "E-mail de confirmação de compra no cartão CaldasCard",
-            from: process.env.EMAIL_FROM,
-            to: emailUsuario,
-            cc: emailConv,
-            html: `
-            <html>
-            <body>
-                <center><h1>Olá ,${nomServidor}<h1></center>
-                <center><p>Você efetuou uma compra com o seu cartão CALDASCARD</p></center></b></b>
-                <center><p>Dados da Compra</p></center></b></b>
-                <center><h3>Codigo da Compra:${idCompra}</h3></center></b></b></b>
-                <center><h3>Emissão Compra:${emiCompra}</h3></center></b></b></b>
-                <center><h3>Qtde de Parcelas:${qtdParc}</h3></center></b></b></b>
-                <center><h3>Valor da Compra:${vlrCompra}</h3></center></b></b></b>
-                <center><img src="public/logo-barra.png" alt="CaldasCard" align="center" width="300px" height="120" /></center>
-            </body>
-          </html> 
-            `,
-        });
-//        console.log(mailSent);
-
-//        console.log('enviou email da compra')
+    }, 
     
-*/
+    
 
-        return response.status(200).send();  
-    },    
   
     async searchCompras (request, response) {
         let id = request.params.idCmp;
