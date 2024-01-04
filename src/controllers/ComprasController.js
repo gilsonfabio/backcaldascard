@@ -77,14 +77,6 @@ module.exports = {
         const qtdParc = request.body.cmpQtdParcela;
         const vlrCompra = request.body.cmpVlrCompra;
         
-        const compra = await connection('compras')
-            .where('cmpServidor', servidor)
-            .where('cmpEmissao', emiCompra)
-            .where('cmpVlrCompra', vlrCompra)
-            .where('cmpStatus', 'A')
-            .select('*');
-
-        if (!compra) {
             const [cmpId] = await connection('compras').insert({
                 cmpEmissao, 
                 cmpHorEmissao, 
@@ -224,10 +216,7 @@ module.exports = {
             }
 
             return response.status(200).send();
-               
-        }else {
-            return response.status(403).json({ error: 'Compra já confirmada!'});
-        } 
+                       
     }, 
     
     
