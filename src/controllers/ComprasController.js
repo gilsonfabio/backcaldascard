@@ -68,15 +68,67 @@ module.exports = {
         return response.json(compras);
     },  
 
-    async create(request, response) {
+    async mosCompras(request, response) {
         const { cmpEmissao, cmpHorEmissao, cmpConvenio, cmpQtdParcela, cmpVlrCompra, cmpServidor, cmpCodSeguranca, cmpStatus } = request.body;
          
-        let servidor = request.body.cmpServidor;
-        let convenio = request.body.cmpConvenio;
+        const servidor = request.body.cmpServidor;
+        const convenio = request.body.cmpConvenio;
         const emiCompra = request.body.cmpEmissao;
         const qtdParc = request.body.cmpQtdParcela;
         const vlrCompra = request.body.cmpVlrCompra;
+        let valorCompra = 0.00;
+        valorCompra = parseFloat(vlrCompra.toFixed(2));
+    
+        const compras = await connection('compras')
+            .where('cmpServidor', servidor)
+            .where('cmpConvenio', convenio)
+            .where('cmpEmissao', emiCompra)
+            .where('cmpVlrCompra', valorCompra)
+            .where('cmpStatus', 'A')
+            .select('*');
+
+        if (!compras) {
+            return response.status(402).json({ error: 'Não encontrou compras nesse periodo'});
+        }   
+
+        console.log('Total de registros...',compras.length);
+        return response.json({compras});
+
+    },
+
+    async create(request, response) {
+        const { cmpEmissao, cmpHorEmissao, cmpConvenio, cmpQtdParcela, cmpVlrCompra, cmpServidor, cmpCodSeguranca, cmpStatus } = request.body;
+         
+        const servidor = parseInt(request.body.cmpServidor);
+        const convenio = parseInt(request.body.cmpConvenio);
+        const emiCompra = request.body.cmpEmissao;
+        const qtdParc = request.body.cmpQtdParcela;
+        const vlrCompra = request.body.cmpVlrCompra;
+        let valorCompra = 0.00;
+        valorCompra = parseFloat(vlrCompra.toFixed(2));
+    
+        const compras = await connection('compras')
+            .where('cmpServidor', servidor)
+            .where('cmpConvenio', convenio)
+            .where('cmpEmissao', emiCompra)
+            .where('cmpVlrCompra', valorCompra)
+            .where('cmpStatus', 'A')
+            .select('*');
         
+        //console.log('total de quantidade....', compras.length);
+
+        if (compras.length > 0) {
+           return response.status(405).json({ error: 'Compras encontradas nesse periodo'});
+        }     
+
+        //if (compras[0].cmpId === undefined) {
+            //console.log('Não existe compra!')
+            //console.log(servidor);
+            //console.log(convenio);
+            //console.log(emiCompra);
+            //console.log(qtdParc);
+            //console.log(valorCompra);
+
             const [cmpId] = await connection('compras').insert({
                 cmpEmissao, 
                 cmpHorEmissao, 
@@ -93,14 +145,7 @@ module.exports = {
             let month = datProcess.getMonth();
             let day = datProcess.getDate();
             let dayVct = 15;    
-//
-//        console.log(convenio);
-//        console.log(datProcess);
-//        console.log('Ano:', year);
-//        console.log('Mes:', month);
-//        console.log('Dia:', day);
-//        console.log('passou na compra')
-//
+
             const horProcess = moment().format('hh:mm:ss');        
             const idCompra = cmpId;    
         
@@ -212,16 +257,12 @@ module.exports = {
                 .where('usrAno',anoParc)
                 .increment({usrVlrUsado: vlrParcela})
                 .decrement({usrVlrDisponivel: vlrParcela});        
-
             }
 
             return response.status(200).send();
-                       
+                        
     }, 
-    
-    
-
-  
+      
     async searchCompras (request, response) {
         let id = request.params.idCmp;
         let status = 'A';

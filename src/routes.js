@@ -113,6 +113,8 @@ routes.get('/dadCompra/:idCmp', ComprasController.dadCompra);
 routes.get('/parCompra/:idCmp', ParcelasController.parCompra);
 routes.put('/cncCompra/:idCmp', ComprasController.cncCompra);
 
+routes.post('/mosCompras', ComprasController.mosCompras);
+
 routes.get('/findCompras/:datVencto', ComprasController.cmpVencto);
 routes.get('/totCompras/:datVencto', ComprasController.totCompras);
 
