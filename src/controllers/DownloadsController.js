@@ -4,6 +4,7 @@ module.exports = {
     async downTexto (request, response) {
         let inicio = request.params.datInicial;
         let final = request.params.datInicial;
+        let srvStatus = request.params.status;
         let idOrg = request.params.orgId;
 
         let dtAtual = new Date(inicio);  
@@ -19,7 +20,11 @@ module.exports = {
             .where('usrAno',year)
             .where('orgId', idOrg)
             .where('usrVlrUsado', '>', vlrLimite)
-            .select(['servidores.usrMatricula', 'servidores.usrNome','usrSaldo.usrVlrUsado',])
+            .whereIn('usrId', function() {
+                this.where('usrStatus', srvStatus)
+                this.select('usrId').from('servidores');
+            })
+            .select(['servidores.usrMatricula', 'servidores.usrNome', 'servidores.usrStatus', 'usrSaldo.usrVlrUsado',])
        
         return response.json(saldo);  
         
@@ -42,6 +47,7 @@ module.exports = {
     async relFecTxt (request, response) {
         let inicio = request.params.datInicial;
         let final = request.params.datInicial;
+        let srvStatus = request.params.status;
         let idOrg = request.params.orgId;
 
         let dtAtual = new Date(inicio);  
@@ -62,7 +68,11 @@ module.exports = {
             .where('usrAno',year)
             .where('orgId', idOrg)
             .where('usrVlrUsado', '>', vlrLimite)
-            .select(['servidores.usrId','servidores.usrMatricula', 'servidores.usrNome','usrSaldo.usrVlrUsado',])
+            .whereIn('usrId', function() {
+                this.where('usrStatus', srvStatus)
+                this.select('usrId').from('servidores');
+            })
+            .select(['servidores.usrId','servidores.usrMatricula', 'servidores.usrNome', 'servidores.usrStatus','usrSaldo.usrVlrUsado',])
             .orderBy('servidores.usrNome');
        
         //console.log(saldo);

@@ -115,8 +115,8 @@ routes.put('/cncCompra/:idCmp', ComprasController.cncCompra);
 
 routes.post('/mosCompras', ComprasController.mosCompras);
 
-routes.get('/findCompras/:datVencto', ComprasController.cmpVencto);
-routes.get('/totCompras/:datVencto', ComprasController.totCompras);
+routes.get('/findCompras/:datVencto/:regStatus', ComprasController.cmpVencto);
+routes.get('/totCompras/:datVencto/:regStatus', ComprasController.totCompras);
 
 routes.get('/totConvenios/:datInicial', PdfsController.totConvenios);
 
@@ -125,11 +125,11 @@ routes.get('/somCompras/:datInicio/:datFinal/:convenio/:servidor', PdfsControlle
 routes.get('/vctPeriodo/:datInicio/:datFinal/:convenio/:servidor', PdfsController.vctPeriodo);
 routes.get('/somVctComp/:datInicio/:datFinal/:convenio/:servidor', PdfsController.somVctComp);
 
-routes.get('/findCmpOrgao/:datVencto/:orgao', ComprasController.cmpOrgVenc);
-routes.get('/totCmpOrgao/:datVencto/:orgao', ComprasController.totCmpOrgao);
+routes.get('/findCmpOrgao/:datVencto/:orgao/:regStatus', ComprasController.cmpOrgVenc);
+routes.get('/totCmpOrgao/:datVencto/:orgao/:regStatus', ComprasController.totCmpOrgao);
 routes.get('/pdfVdaEmissao', PdfsController.pdfVdaEmissao);
-routes.get('/pdfVdaVenc/:dataInicial/:dataFinal', PdfsController.pdfVdaVenc);
-routes.get('/pdfVctOrgao/:dataInicial/:dataFinal/:orgId', PdfsController.pdfVctOrgao);
+routes.get('/pdfVdaVenc/:dataInicial/:dataFinal/:status', PdfsController.pdfVdaVenc);
+routes.get('/pdfVctOrgao/:dataInicial/:dataFinal/:orgId/:status', PdfsController.pdfVctOrgao);
 routes.get('/filiacao/:usrId', FiliacaoController.filiacao);
 routes.post('/newfiliacao', FiliacaoController.create);
 routes.get('/searchFiliacao/:idUsr/:idFil', FiliacaoController.searchFiliacao);
@@ -157,8 +157,8 @@ routes.get('/pdfEmiCmpSrv:datInicial/:datFinal/:srvId', PdfsController.pdfEmiCmp
 
 routes.get('/pdfExtAdm/:dataInicial', PdfsController.pdfExtAdm);
 
-routes.get('/downloadTxt/:datInicial/:orgId', DownloadsController.downTexto);
-routes.get('/relFecTxt/:datInicial/:orgId', DownloadsController.relFecTxt);
+routes.get('/downloadTxt/:datInicial/:orgId/:status', DownloadsController.downTexto);
+routes.get('/relFecTxt/:datInicial/:orgId/:status', DownloadsController.relFecTxt);
 
 routes.get('/tipos', TiposController.index);
 routes.post('/newtipo', TiposController.create);

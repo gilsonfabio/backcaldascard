@@ -39,6 +39,7 @@ module.exports = {
         
         let inicio = request.params.dataInicial;
         let final = request.params.dataFinal;
+        let srvStatus = request.params.status;
         let status = 'A';
         //console.log(inicio);
         //console.log(final);
@@ -47,12 +48,16 @@ module.exports = {
         const horNow = moment().format('hh:mm:ss');  
                 
         const vctcompras = await connection('cmpParcelas')
-            .where('parVctParcela','>=', inicio)
-            .where('parVctParcela','<=', final)
-            .where('parStaParcela', status)
             .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
             .join('servidores', 'usrId', 'compras.cmpServidor')
             .join('convenios', 'cnvId', 'compras.cmpConvenio')
+            .where('parVctParcela','>=', inicio)
+            .where('parVctParcela','<=', final)
+            .where('parStaParcela', status)
+            .whereIn('usrId', function() {
+                this.where('usrStatus', srvStatus)
+                this.select('usrId').from('servidores');
+              })
             .select(['cmpParcelas.*', 'compras.cmpEmissao', 'compras.cmpServidor', 'compras.cmpConvenio', 'servidores.usrNome', 'servidores.usrMatricula', 'convenios.cnvNomFantasia']);
 
         return response.json(vctcompras);
@@ -178,25 +183,32 @@ module.exports = {
         let inicio = request.params.dataInicial;
         let final = request.params.dataFinal;
         let idOrg = request.params.orgId;
+        let srvStatus = request.params.status
         let status = 'A';
-        //console.log(inicio);
-        //console.log(final);
-        //console.log(idOrg);
+        
+        console.log(inicio);
+        console.log(final);
+        console.log(idOrg);
+        console.log(srvStatus);
 
         const datNow = moment().format('DD-MM-YYYY');
         const horNow = moment().format('hh:mm:ss');  
                 
         const vctcompras = await connection('cmpParcelas')
-            .where('parVctParcela','>=', inicio)
-            .where('parVctParcela','<=', final)
-            .where('parStaParcela', status)
-            .where('orgId', idOrg)
-            .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
+        .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
             .join('servidores', 'usrId', 'compras.cmpServidor')
             .join('convenios', 'cnvId', 'compras.cmpConvenio')
             .join('secretarias', 'secId', 'servidores.usrSecretaria')
             .join('orgadmin', 'orgId', 'secretarias.secOrgAdm')
-            .select(['cmpParcelas.*', 'compras.cmpEmissao', 'compras.cmpServidor', 'compras.cmpConvenio', 'servidores.usrNome', 'convenios.cnvNomFantasia','secretarias.secOrgAdm', 'orgadmin.orgId'])
+            .where('parVctParcela','>=', inicio)
+            .where('parVctParcela','<=', final)
+            .where('parStaParcela', status)
+            .where('orgId', idOrg)
+            .whereIn('usrId', function() {
+                this.where('usrStatus', srvStatus)
+                this.select('usrId').from('servidores');
+              })
+            .select(['cmpParcelas.*', 'compras.cmpEmissao', 'compras.cmpServidor', 'compras.cmpConvenio', 'servidores.usrNome', 'servidores.usrStatus', 'convenios.cnvNomFantasia','secretarias.secOrgAdm', 'orgadmin.orgId'])
             .orderBy('servidores.usrNome');
              
         //console.log(vctcompras);
