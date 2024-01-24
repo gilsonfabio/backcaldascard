@@ -41,8 +41,10 @@ module.exports = {
         let final = request.params.dataFinal;
         let srvStatus = request.params.status;
         let status = 'A';
+        
         //console.log(inicio);
         //console.log(final);
+        //console.log(srvStatus);
 
         const datNow = moment().format('DD-MM-YYYY');
         const horNow = moment().format('hh:mm:ss');  
@@ -58,7 +60,7 @@ module.exports = {
                 this.where('usrStatus', srvStatus)
                 this.select('usrId').from('servidores');
               })
-            .select(['cmpParcelas.*', 'compras.cmpEmissao', 'compras.cmpServidor', 'compras.cmpConvenio', 'servidores.usrNome', 'servidores.usrMatricula', 'convenios.cnvNomFantasia']);
+            .select(['cmpParcelas.*', 'compras.cmpEmissao', 'compras.cmpServidor', 'compras.cmpConvenio', 'servidores.usrNome', 'servidores.usrStatus', 'servidores.usrMatricula', 'convenios.cnvNomFantasia']);
 
         return response.json(vctcompras);
     }, 
@@ -183,13 +185,13 @@ module.exports = {
         let inicio = request.params.dataInicial;
         let final = request.params.dataFinal;
         let idOrg = request.params.orgId;
-        let srvStatus = request.params.status
+        let srvStatus = request.params.status;
         let status = 'A';
         
-        console.log(inicio);
-        console.log(final);
-        console.log(idOrg);
-        console.log(srvStatus);
+        //console.log(inicio);
+        //console.log(final);
+        //console.log(idOrg);
+        //console.log(srvStatus);
 
         const datNow = moment().format('DD-MM-YYYY');
         const horNow = moment().format('hh:mm:ss');  
