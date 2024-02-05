@@ -499,6 +499,94 @@ module.exports = {
         return response.status(204).send();
     },
 
+    async updLimite(request, response) {
+        let id = request.params.idUsr;      
+        let usrNome = request.usrNome;
+        let usrObsBloqueio = request.usrObsBloqueio;
+        let usrCartao = request.usrCartao;
+        let usrStatus = request.usrStatus;
+        let cartao = request.body.usrCartao;
+        let slrBruto = request.body.usrSalBruto;
+        let slrBase = request.body.usrSalBase;
+        let slrLiquido = request.body.usrSalLiquido; 
+        let updSld = request.body.altSaldo;        
+        
+        let datUpdate = new Date();
+
+        await connection('servidores').where('usrCartao', cartao)   
+        .update({
+            usrStatus,
+            usrObsBloqueio,
+            usrSalBase: slrBase,
+            usrSalBruto: slrBruto,
+            usrSalLiquido: slrLiquido
+        });
+
+        if (updSld === 'S') {
+            let datProcess = new Date();
+            let year = datProcess.getFullYear();
+            let month = datProcess.getMonth();
+            let day = datProcess.getDate();
+
+            let vlrLimite = ((slrLiquido * 30) / 100);
+            let vlrInicial = 0.00;
+            let usuario = '0';
+
+            let vet = 1;
+            while(vet <= 25) {
+
+                //console.log('Mes:', month);
+                //console.log('Ano:', year);                  
+
+                const busSld = await connection('usrSaldo')
+                .where('usrServ',cartao)
+                .where('usrMes',month)
+                .where('usrAno',year)
+                .select('*'); 
+
+                //console.log(busSld);
+
+                if (busSld.length === 0) {
+                    usuario = '0';                    
+                }else {
+                    usuario = busSld[0].usrServ;
+                } 
+
+                if (usuario != '0') {
+                    let vlrUsado = busSld[0].usrVlrUsado;
+                    let novLimite = 0.00;
+                    novLimite = vlrLimite - vlrUsado;
+                    
+                    //console.log('Novo Limite:', novLimite); 
+
+                    const updSaldo = await connection('usrSaldo')
+                    .where('usrServ',cartao)
+                    .where('usrMes',month)
+                    .where('usrAno',year)
+                    .update({
+                        usrVlrDisponivel: novLimite 
+                    });              
+                }else {
+                    const [saldo] = await connection('usrSaldo').insert({
+                        usrServ: cartao,
+                        usrMes: month,
+                        usrAno: year,
+                        usrVlrDisponivel: vlrLimite,
+                        usrVlrUsado: vlrInicial,
+                    });
+                }
+                vet = vet + 1;
+                month = month + 1;
+                if (month === 13) {
+                    month = 1
+                    year = year + 1  
+                }   
+            }
+        }
+                 
+        return response.status(204).json({ message: 'Dados Atualizados'});
+    },
+
     async classUser (request, response) {
         let nome = request.params.search;
         const user = await connection('servidores')

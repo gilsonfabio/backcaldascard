@@ -42,6 +42,7 @@ routes.get('/cmpLibera/:cartao', UsersController.liberaUsr);
 routes.get('/mosServ/:cpfSrv', UsersController.mosServ);
 routes.get('/dadServ/:carServ', UsersController.dadServ);
 routes.put('/altpermissao/:idSrv', UsersController.updPermissao);
+routes.post('/updLimite', UsersController.updLimite);
 
 routes.get('api/admin', AdminController.index);
 routes.get('/loginAdm/:email/:password', AdminController.signIn);
