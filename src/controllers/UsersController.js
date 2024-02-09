@@ -500,11 +500,11 @@ module.exports = {
     },
 
     async updLimite(request, response) {
-        let id = request.params.idUsr;      
-        let usrNome = request.usrNome;
-        let usrObsBloqueio = request.usrObsBloqueio;
-        let usrCartao = request.usrCartao;
-        let usrStatus = request.usrStatus;
+        let id = request.body.idSrv;      
+        let usrNome = request.body.usrNome;
+        let usrObsBloqueio = request.body.usrObsBloqueio;
+        let usrCartao = request.body.usrCartao;
+        let usrStatus = request.body.usrStatus;
         let cartao = request.body.usrCartao;
         let slrBruto = request.body.usrSalBruto;
         let slrBase = request.body.usrSalBase;
@@ -521,7 +521,7 @@ module.exports = {
             usrSalBruto: slrBruto,
             usrSalLiquido: slrLiquido
         });
-
+        
         if (updSld === 'S') {
             let datProcess = new Date();
             let year = datProcess.getFullYear();
