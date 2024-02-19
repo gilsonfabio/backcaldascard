@@ -55,10 +55,10 @@ module.exports = {
         let month = dtAtual.getMonth() + 1;
         let vlrLimite = 0.00;
 
-        //console.log(inicio);
-        //console.log(year);
-        //console.log(month);
-        //console.log(idOrg);
+        console.log(inicio);
+        console.log(year);
+        console.log(month);
+        console.log(idOrg);
 
         const saldo = await connection('usrSaldo')
             .join('servidores', 'usrCartao', 'usrSaldo.usrServ')
@@ -76,7 +76,37 @@ module.exports = {
             .orderBy('servidores.usrNome');
        
         //console.log(saldo);
-        return response.json(saldo);  
+            return response.json(saldo);  
+    },
+
+    async relFecham (request, response) {
+        let inicio = request.params.datInicial;
+        let final = request.params.datInicial;
+        let srvStatus = request.params.status;
+
+        let dtAtual = new Date(inicio);  
+        let year = dtAtual.getFullYear();
+        let month = dtAtual.getMonth() + 1;
+        let vlrLimite = 0.00;
+
+        console.log(inicio);
+        console.log(year);
+        console.log(month);
         
+        const saldo = await connection('usrSaldo')
+            .join('servidores', 'usrCartao', 'usrSaldo.usrServ')
+            .join('secretarias', 'secId', 'servidores.usrSecretaria')
+            .join('orgadmin', 'orgId', 'secretarias.secOrgAdm')
+            .where('usrMes',month)
+            .where('usrAno',year)
+            .where('usrVlrUsado', '>', vlrLimite)
+            .whereIn('usrId', function() {
+                this.where('usrStatus', srvStatus)
+                this.select('usrId').from('servidores');
+            })
+            .select(['servidores.usrId','servidores.usrMatricula', 'servidores.usrNome', 'servidores.usrStatus','usrSaldo.usrVlrUsado',])
+            .orderBy('servidores.usrNome');
+  
+            return response.json(saldo);         
     },
 };

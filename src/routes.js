@@ -160,6 +160,7 @@ routes.get('/pdfExtAdm/:dataInicial', PdfsController.pdfExtAdm);
 
 routes.get('/downloadTxt/:datInicial/:orgId/:status', DownloadsController.downTexto);
 routes.get('/relFecTxt/:datInicial/:orgId/:status', DownloadsController.relFecTxt);
+routes.get('/relFecham/:datInicial/:status', DownloadsController.relFecham);
 
 routes.get('/tipos', TiposController.index);
 routes.post('/newtipo', TiposController.create);
