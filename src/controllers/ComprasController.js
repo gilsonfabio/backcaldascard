@@ -44,7 +44,7 @@ module.exports = {
         .where('cmpStatus', status)
         .join('servidores', 'usrId', 'compras.cmpServidor')
         .join('convenios', 'cnvId', 'compras.cmpConvenio')
-        .limit(20)
+        .limit(50)
         .orderBy('cmpId', 'desc')
         .select(['compras.*', 'servidores.usrNome', 'convenios.cnvNomFantasia']);
 
