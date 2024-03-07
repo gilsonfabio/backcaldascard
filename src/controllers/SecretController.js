@@ -6,8 +6,8 @@ module.exports = {
         let status = 'A';
         const secretarias = await connection('secretarias')
         .where('secStatus', status)
-        .select('*')
-        orderBy('secDescricao');
+        .orderBy('secDescricao')
+        .select('*');
     
         return response.json(secretarias);
     },    
