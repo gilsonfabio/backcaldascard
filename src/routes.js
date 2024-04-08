@@ -62,6 +62,7 @@ routes.post('/neworgadmin', OrgaosController.create);
 routes.put('/altorgao/:idOrg', OrgaosController.updateOrg);
 routes.get('/searchOrg/:idOrg', OrgaosController.searchOrg);
 routes.put('/delorgadmin/:idOrg', OrgaosController.deleteOrg);
+routes.post('/totOrgao', OrgaosController.totOrgao);
 
 routes.get('/atividades', AtivController.index);
 routes.get('/searchAtiv/:idAtv', AtivController.searchAtiv);

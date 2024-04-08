@@ -56,4 +56,69 @@ module.exports = {
            
         return response.status(204).send();
     },
+
+    async totOrgao(request, response) {
+        
+        let vctParcela = request.body.datInicio;
+        let datProcess = new Date(request.body.datInicio);
+        let year = datProcess.getFullYear();
+        let month = datProcess.getMonth() + 1;
+        let day = datProcess.getDate();
+        let dayVct = 15;    
+         
+        console.log(vctParcela);
+        console.log(datProcess);
+
+        let status = 'A';
+        let vet = 1;
+        while(vet <= 21) {
+            let vlrVenda = parseInt('0.00');
+
+            const vendas = await connection('cmpParcelas')
+            .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
+            .join('servidores', 'usrId', 'compras.cmpServidor')
+            .join('secretarias', 'secId', 'servidores.usrSecretaria')
+            .join('orgadmin', 'orgId', 'secretarias.secOrgAdm')
+            .where('parVctParcela', vctParcela)
+            .where('parStaParcela', status)
+            .where('orgId', vet)        
+            .orderBy('parVctParcela')
+            .sum({totCmp : 'parVlrParcela'});
+
+            if (vendas) {
+                let result = vendas[0].totCmp;
+                console.log(result)
+                vlrVenda = result;
+                console.log(vet)
+                console.log(year)
+                console.log(month)
+                console.log(vlrVenda)
+            }else {
+                vlrVenda = parseInt('0.00').toFixed(2)    
+            }   
+
+            const orgao = await connection('totVdaOrg')
+            .where('idTotOrg', vet)
+            .delete();
+
+            const [total] = await connection('totVdaOrg').insert({
+                idTotOrg: vet,
+                orgTotAno: year,
+                orgTotMes: month,
+                orgTotVlrVenda: vlrVenda       
+            });
+
+            vet ++;
+        }
+
+        const compras = await connection('totVdaOrg')
+        .join('orgadmin', 'orgId', 'totVdaOrg.idTotOrg')
+        .where('orgTotAno', year)
+        .where('orgTotMes', month)
+        .select(['totVdaOrg.*', 'orgadmin.orgDescricao']);
+    
+        return response.json(compras);
+
+    }
+
 };
