@@ -209,7 +209,7 @@ module.exports = {
             
                 let taxa = parseInt(cnv[0].atvTaxAdm)
             
-                let perSist = 25;
+                let perSist = 20;
                 let auxParcela = vlrProcess;
                 let auxTaxa = ((auxParcela * taxa) / 100);
                 let auxLiquido = auxParcela - auxTaxa; 
@@ -256,11 +256,30 @@ module.exports = {
                 .where('usrMes',mesParc)
                 .where('usrAno',anoParc)
                 .increment({usrVlrUsado: vlrParcela})
-                .decrement({usrVlrDisponivel: vlrParcela});        
+                .decrement({usrVlrDisponivel: vlrParcela});       
+                
+                if(!updServ) {
+                    const usuario = await connection('servidores')
+                    .where('usrCartao',nroCartao)
+                    .select('usrSalLiquido');
+         
+                    if (!usuario) {
+                        return response.status(400).json({ error: 'Não encontrou servidor com este ID'});
+                    } 
+          
+                    let vlrLimite = ((usuario[0].usrSalLiquido * 30) / 100);
+
+                    const [saldo] = await connection('usrSaldo').insert({
+                        usrServ: nroCartao,
+                        usrMes: mesParc,
+                        usrAno: anoParc,
+                        usrVlrDisponivel: vlrLimite,
+                        usrVlrUsado: vlrParcela,
+                    });
+                }
             }
 
-            return response.status(200).send();
-                        
+            return response.status(200).send();                        
     }, 
       
     async searchCompras (request, response) {
@@ -532,4 +551,84 @@ module.exports = {
         return response.status(204).send();
                 
     },    
+
+    async corTotCmp(request, response) {
+        let id = request.params.idCnv;
+        let status = 'A';
+        let datProcess = new Date();
+        let day = '15';
+        let year = datProcess.getFullYear();
+        let month = datProcess.getMonth() ;
+        let datVencto = new Date(year, month, day);
+
+        //console.log('Convenio:', id )
+        //console.log('Data:', datVencto)
+
+        const total = await connection('cmpParcelas')
+            .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
+            .join('servidores', 'usrId', 'compras.cmpServidor')
+            .join('secretarias', 'secId', 'servidores.usrSecretaria')
+            .join('orgadmin', 'orgId', 'secretarias.secOrgAdm')
+            .where('cmpParcelas.parVctParcela', datVencto)
+            .where('cmpParcelas.parStaParcela', status)
+            .where('compras.cmpConvenio', id )
+            .sum({totCmp: 'parVlrParcela'});
+
+        if (!total ) {
+            return response.status(400).json({ error: 'Não encontrou compras nesse periodo'});
+        }
+
+        //console.log('Total de Compras:', total[0].totCmp);
+
+        const cnv = await connection('convenios')
+        .where('cnvId',id)
+        .join('atividades', 'atvId', 'convenios.cnvAtividade')
+        .select(['cnvId','atividades.atvTaxAdm']);
+    
+        //console.log('Taxa:', cnv[0].atvTaxAdm)
+
+        let taxa = parseInt(cnv[0].atvTaxAdm);
+
+        let auxTotCompras = parseFloat(total[0].totCmp);
+        let auxTotTaxa = ((auxTotCompras * taxa) / 100);
+        let auxTotLiquido = auxTotCompras - auxTotTaxa; 
+        let auxTotSistema = ((auxTotTaxa * 20) / 100);
+
+        month = month + 1;
+        //console.log('Mes:', month);
+        //console.log('Ano:', year);
+        //console.log('Convenio:', id);
+        //console.log('Vlr Total:', auxTotCompras);
+
+        const updConv = await connection('totVdaCnv')
+            .where('tcnvId',id)
+            .where('tcnvMes',month)
+            .where('tcnvAno',year)
+            .update({
+                tcnvVlrTotal: auxTotCompras,
+                tcnvVlrTaxa: auxTotTaxa,
+                tcnvVlrLiquido: auxTotLiquido,
+                tcnvVlrSistema: auxTotSistema
+            });
+
+        if(!updConv) {
+            const [totaliza] = await connection('totVdaCnv').insert({
+                tcnvId: id,
+                tcnvAno: year,
+                tcnvMes: month,
+                tcnvVlrTotal: auxTotCompras,
+                tcnvVlrTaxa: auxTotTaxa,
+                tcnvVlrLiquido: auxTotLiquido,
+                tcnvVlrSistema: auxTotSistema,                
+            });
+        }
+
+        const totCnv = await connection('totVdaCnv')
+        .where('tcnvId',id)
+        .where('tcnvMes',month)
+        .where('tcnvAno',year)
+        .select('tcnvVlrTotal', 'tcnvVlrTaxa', 'tcnvVlrLiquido', 'tcnvVlrSistema');
+
+        return response.json({totCnv});
+    }
 };
