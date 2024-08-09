@@ -161,6 +161,7 @@ routes.get('/pdfEmiCmpCnv/:datInicial/:datFinal/:cnvId', PdfsController.pdfEmiCm
 routes.get('/pdfEmiCmpSrv:datInicial/:datFinal/:srvId', PdfsController.pdfEmiCmpSrv);
 
 routes.get('/pdfExtAdm/:dataInicial', PdfsController.pdfExtAdm);
+routes.get('/pdfExtOrgao/:dataInicial', PdfsController.pdfExtOrgao);
 
 routes.get('/downloadTxt/:datInicial/:orgId/:status', DownloadsController.downTexto);
 routes.get('/relFecTxt/:datInicial/:orgId/:status', DownloadsController.relFecTxt);
@@ -180,4 +181,3 @@ routes.get('/corSaldo', DownloadsController.corSaldo);
 
 
 module.exports = routes;
-

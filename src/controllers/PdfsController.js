@@ -723,4 +723,22 @@ module.exports = {
        return response.status(200).json({ error: 'Totalizador processado com sucesso!'});
     },                    
 
+    async pdfExtOrgao(request, response) {
+        
+        let vctParcela = request.params.dataInicial;
+        let datProcess = new Date(request.params.dataInicial);
+        let year = datProcess.getFullYear();
+        let month = datProcess.getMonth() + 1;
+        let day = datProcess.getDate();
+        let dayVct = 15;    
+         
+        let status = 'A';
+        const compras = await connection('totVdaOrg')
+        .join('orgadmin', 'orgId', 'totVdaOrg.idTotOrg')
+        .where('orgTotAno', year)
+        .where('orgTotMes', month)
+        .select(['totVdaOrg.*', 'orgadmin.orgDescricao']);
+    
+        return response.json(compras);
+    },
 };

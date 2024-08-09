@@ -66,8 +66,8 @@ module.exports = {
         let day = datProcess.getDate();
         let dayVct = 15;    
          
-        console.log(vctParcela);
-        console.log(datProcess);
+        //console.log(vctParcela);
+        //console.log(datProcess);
 
         let status = 'A';
         let vet = 1;
@@ -87,12 +87,11 @@ module.exports = {
 
             if (vendas) {
                 let result = vendas[0].totCmp;
-                console.log(result)
                 vlrVenda = result;
-                console.log(vet)
-                console.log(year)
-                console.log(month)
-                console.log(vlrVenda)
+                //console.log(vet)
+                //console.log(year)
+                //console.log(month)
+                //console.log(vlrVenda)
             }else {
                 vlrVenda = parseInt('0.00').toFixed(2)    
             }   
