@@ -172,12 +172,13 @@ routes.post('/newtipo', TiposController.create);
 routes.put('/alttipo/:tipId', TiposController.updateTip);
 
 routes.get('/corSaldo', DownloadsController.corSaldo);
+routes.put('/corCmpServ', ComprasController.corCmpServ);
+routes.put('/corCmpConv', OrgaosController.corCmpConv);
 
 //routes.get('/verCartao/:nroCartao', ParametrosController.verCartao);
 
 //routes.post('/gerNewCard', ParametrosController.gerNewCard);
 
 //routes.get('/busTotCmp/:idUsr', ComprasController.busTotCmp);
-
 
 module.exports = routes;

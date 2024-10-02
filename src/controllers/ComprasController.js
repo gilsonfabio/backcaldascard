@@ -740,4 +740,70 @@ module.exports = {
         return response.status(204).send();
                 
     },
+
+    //..........................................................................
+
+    async corCmpServ(request, response) {
+        let status = 'A';
+        let datProcess = new Date();
+        let day = '15';
+        let year = datProcess.getFullYear();
+        let month = datProcess.getMonth() ;
+        let datVencto = new Date(year, month, day);
+
+        let vet = 1;
+        while (vet <= 300) { 
+            const user = await connection('servidores')
+            .where('usrId', vet)
+            .select('*');
+
+            if (user.length > 0 ) {
+                let nome = user[0].usrNome;
+                //console.log('Nome Servidor: ', nome, 'id:', vet);
+                //console.log(user)
+                let cartao = user[0].usrCartao;
+                let vlrLimite = ((user[0].usrSalLiquido * 30) / 100);
+                let totCmp = 0.00;
+
+                const total = await connection('cmpParcelas')
+                .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
+                .join('servidores', 'usrId', 'compras.cmpServidor')
+                .join('secretarias', 'secId', 'servidores.usrSecretaria')
+                .join('orgadmin', 'orgId', 'secretarias.secOrgAdm')
+                .join('convenios', 'cnvId', 'compras.cmpConvenio')
+                .where('compras.cmpServidor', vet)
+                .where('cmpParcelas.parVctParcela', datVencto)
+                .where('cmpParcelas.parStaParcela', status)
+                .sum({totCmp: 'parVlrParcela'});
+
+                if (total.length > 0 ) {
+                    //console.log('Cartão: ', cartao, 'Tot. Compras R$: ',total[0].totCmp );
+
+                    let totCmp = total[0].totCmp;
+
+                    const saldo = await connection('usrSaldo')
+                    .where('usrServ', cartao)
+                    .where('usrMes',month)
+                    .where('usrAno',year)
+                    .update({
+                        usrVlrUsado: vlrZerado,
+                        usrVlrDisponivel: vlrLimite
+                    });
+
+                    const updServ = await connection('usrSaldo')
+                    .where('usrServ',cartao)
+                    .where('usrMes',month)
+                    .where('usrAno',year)
+                    .increment({usrVlrUsado: totCmp})
+                    .decrement({usrVlrDisponivel: totCmp})
+                }           
+            }        
+
+            vet++;
+        }
+
+        return response.status(200).send();
+       
+    },
+
 };
