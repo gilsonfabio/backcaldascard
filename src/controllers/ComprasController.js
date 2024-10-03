@@ -708,7 +708,7 @@ module.exports = {
         let vlrLimite = ((total[0].usrSalLiquido * 30) / 100);
         let nro = 1;
         
-        console.log('Cartão:',nroCartao)
+        //console.log('Cartão:',nroCartao)
         
         let data = total[0].parVlrParcela;
 
@@ -750,7 +750,9 @@ module.exports = {
         let year = datProcess.getFullYear();
         let month = datProcess.getMonth() ;
         let datVencto = new Date(year, month, day);
-
+        //console.log('Data selecionada:', datVencto)
+        let err = 0;
+        let vlrZerado = 0.00;
         let vet = 1;
         while (vet <= 300) { 
             const user = await connection('servidores')
@@ -776,11 +778,14 @@ module.exports = {
                 .where('cmpParcelas.parStaParcela', status)
                 .sum({totCmp: 'parVlrParcela'});
 
-                if (total.length > 0 ) {
+                if (total[0].totCmp === null) {
+                    //console.log('Compras não encontrada!')
+                    err = err + 1;
+                }else {
                     //console.log('Cartão: ', cartao, 'Tot. Compras R$: ',total[0].totCmp );
-
+                    month = month + 1;
                     let totCmp = total[0].totCmp;
-
+                    let vlrZerado = 0.00;
                     const saldo = await connection('usrSaldo')
                     .where('usrServ', cartao)
                     .where('usrMes',month)
