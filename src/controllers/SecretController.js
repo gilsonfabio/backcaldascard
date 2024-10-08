@@ -36,6 +36,18 @@ module.exports = {
         return response.json(secretaria);
     },    
 
+    async searchSecDesc (request, response) {
+        let secDesc = request.params.search;
+        let status = 'A';
+        const secretaria = await connection('secretarias')
+        .where('secDescricao','>', secDesc)
+        .where('secStatus', status)
+        .orderBy('secDescricao')
+        .select('*');
+
+        return response.json(secretaria);
+    },    
+
     async updateSec(request, response) {
         let id = request.params.idSec;         
         

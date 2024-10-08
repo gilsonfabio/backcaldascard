@@ -56,6 +56,7 @@ routes.post('/newsecretaria', SecretController.create);
 routes.get('/searchSec/:idSec', SecretController.searchSec);
 routes.put('/altsecretaria/:idSec', SecretController.updateSec);
 routes.put('/delsecretaria/:idSec', SecretController.deleteSec);
+routes.get('/searchSecDesc/:search', SecretController.searchSecDesc);
 
 routes.get('/orgaos', OrgaosController.index);
 routes.post('/neworgadmin', OrgaosController.create);
