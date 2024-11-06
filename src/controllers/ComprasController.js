@@ -750,9 +750,10 @@ module.exports = {
         let year = datProcess.getFullYear();
         let month = datProcess.getMonth() ;
         let datVencto = new Date(year, month, day);
-        //console.log('Data selecionada:', datVencto)
+        console.log('Data selecionada:', datVencto)
         let err = 0;
         let vlrZerado = 0.00;
+        month = month + 1;
         let vet = 1;
         while (vet <= 300) { 
             const user = await connection('servidores')
@@ -783,17 +784,38 @@ module.exports = {
                     err = err + 1;
                 }else {
                     //console.log('Cartão: ', cartao, 'Tot. Compras R$: ',total[0].totCmp );
-                    month = month + 1;
+                    //month = month + 1;
                     let totCmp = total[0].totCmp;
                     let vlrZerado = 0.00;
-                    const saldo = await connection('usrSaldo')
-                    .where('usrServ', cartao)
-                    .where('usrMes',month)
-                    .where('usrAno',year)
-                    .update({
-                        usrVlrUsado: vlrZerado,
-                        usrVlrDisponivel: vlrLimite
-                    });
+                    
+                    const sldServ = await connection('usrSaldo')
+                        .where('usrServ', cartao)
+                        .where('usrMes',month)
+                        .where('usrAno',year)
+                        .select('*');
+
+                    console.log('Saldo Encontrado!', cartao, 'mes:' ,month, 'Ano:', year )
+
+                    if (sldServ.length > 0 ) {
+                        const saldo = await connection('usrSaldo')
+                        .where('usrServ', cartao)
+                        .where('usrMes',month)
+                        .where('usrAno',year)
+                        .update({
+                            usrVlrUsado: vlrZerado,
+                            usrVlrDisponivel: vlrLimite
+                        });                    
+                    }else {
+                        const saldo = await connection('usrSaldo')                        
+                        .insert({
+                            usrServ: cartao,
+                            usrMes: month,
+                            usrAno: year,
+                            usrVlrUsado: vlrZerado,
+                            usrVlrDisponivel: vlrLimite
+                        }); 
+                        console.log('Saldo novo encontrado!', cartao, 'Valor:' ,totCmp)
+                    }
 
                     const updServ = await connection('usrSaldo')
                     .where('usrServ',cartao)
@@ -807,8 +829,94 @@ module.exports = {
             vet++;
         }
 
-        return response.status(200).send();
+        return response.status(200).json({ msn: 'Saldo verificado!'});
        
     },
+
+    async verifCompras (request, response) {
+        let status = 'A';
+        let qtd = 1;
+
+        let vet = 144;
+        while(vet < 3600) {
+            const compra = await connection('compras')
+            .where('cmpId', vet)
+            .where('cmpQtdParcela', '>', qtd)
+            .where('cmpStatus', status)
+            .select('*');
+            if (compra.length > 0) {
+                let datProcess = new Date();
+                let year = datProcess.getFullYear();
+                let month = datProcess.getMonth();
+                let day = datProcess.getDate();
+                let dayVct = 15;    
+
+                let horProcess = moment().format('hh:mm:ss');        
+                let idCompra = compra[0].cmpId;    
+        
+                let vlrParcela = 0.00;
+                vlrParcela = parseFloat((compra[0].cmpVlrCompra) / compra[0].cmpQtdParcela);
+                let vlrResult = 0.00;
+                vlrResult = parseFloat((vlrParcela) * compra[0].cmpQtdParcela);
+                let vlrResto = 0.00;
+                vlrResto = parseFloat((compra[0].cmpVlrCompra) - (vlrResult).toFixed(2));
+
+                let staParcela = 'A';
+
+                console.log(compra[0].cmpId)
+                console.log(compra[0].cmpQtdParcela)
+                console.log(vlrParcela)
+                console.log(vlrResult)
+                console.log(vlrResto)
+
+                let parc = 1;
+                while (parc <= compra[0].cmpQtdParcela) {
+                    const item = await connection('cmpParcelas')
+                    .where('parIdCompra', idCompra)
+                    .where('parNroParcela', parc)
+                    .select('*');
+
+                    let vctParcela = '';
+                    let vlrProcess = 0.00;
+                    let staParcela = 'A';
+
+                    if (item.length > 0 ) {
+                        console.log('parcela:', parc, item[0].parVctParcela )
+                        vctParcela = item[0].parVctParcela;
+                        vlrParcela = item[0].parVlrParcela;
+                        month = item[0].parVctParcela.getMonth();
+                        year = item[0].parVctParcela.getFullYear();
+                    }else {
+                        month = month + 1;                        
+                        if (month === 13 ) {
+                            year = year + 1 
+                            month = 1
+                        }                       
+                        day = 15;
+                        
+                        let vctParcela = new Date(year, month, day);
+                        let vlrProcess = vlrParcela;
+
+                        const [parId] = await connection('cmpParcelas').insert({
+                            parIdCompra: idCompra,
+                            parNroParcela: parc,
+                            parVctParcela: vctParcela,
+                            parVlrCompra: vlrProcess,
+                            parVlrParcela: vlrProcess,
+                            parStaParcela: staParcela,                
+                        });
+
+                        console.log('Nova Parcela gerada:', parc, 'Vencto:' , vctParcela, 'Valor:', vlrProcess)                        
+                    }    
+                    parc = parc + 1;
+                }
+            }else {
+                console.log('Compra não encontrada', vet)
+            }    
+            vet = vet + 1;
+        }
+
+        return response.status(200).send();
+    },   
 
 };
