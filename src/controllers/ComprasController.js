@@ -919,4 +919,24 @@ module.exports = {
         return response.status(200).send();
     },   
 
+    async ultCompras(request, response) {
+        const servidor = request.params.id;
+        const compras = await connection('cmpParcelas')
+            .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
+            .join('servidores', 'usrId', 'compras.cmpServidor')
+            .join('convenios', 'cnvId', 'compras.cmpConvenio')
+            .where('compras.cmpServidor', servidor)
+            .where('parStaParcela', 'A')
+            .limit(10)
+            .orderBy('compras.cmpEmissao', 'desc')
+            .select(['cmpParcelas.*', 'servidores.usrId', 'servidores.usrNome', 'compras.cmpEmissao', 'compras.cmpQtdParcela', 'compras.cmpVlrCompra', 'convenios.cnvId', 'convenios.cnvNomFantasia']);
+
+        if (!compras) {
+            return response.status(402).json({ error: 'Não encontrou compras nesse periodo'});
+        }   
+
+        return response.json(compras);
+
+    },
+
 };

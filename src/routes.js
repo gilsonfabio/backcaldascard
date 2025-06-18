@@ -38,11 +38,16 @@ routes.get('/verifUser/:cartao', UsersController.verifUser);
 routes.put('/altservidor/:idSrv', UsersController.updServidor);
 routes.get('/classUser/:search', UsersController.classUser);
 routes.get('/cmpLibera/:cartao', UsersController.liberaUsr);
+
 //routes.put('/deletaUsr/:idSrv', UsersController.delUser);
+
 routes.get('/mosServ/:cpfSrv', UsersController.mosServ);
 routes.get('/dadServ/:carServ', UsersController.dadServ);
 routes.put('/altpermissao/:idSrv', UsersController.updPermissao);
 routes.post('/updLimite', UsersController.updLimite);
+routes.get('/searchServ/:cartao', UsersController.searchServ);
+
+routes.post('/signInSrv', UsersController.signInSrv);
 
 routes.get('api/admin', AdminController.index);
 routes.get('/loginAdm/:email/:password', AdminController.signIn);
@@ -115,6 +120,7 @@ routes.get('/cmpServidor/:idSrv', ComprasController.cmpServidor);
 routes.get('/dadCompra/:idCmp', ComprasController.dadCompra);
 routes.get('/parCompra/:idCmp', ParcelasController.parCompra);
 routes.put('/cncCompra/:idCmp', ComprasController.cncCompra);
+routes.get('/ultCompras/:id', ComprasController.ultCompras);
 
 routes.get('/verifCompras', ComprasController.verifCompras);
 

@@ -3,6 +3,9 @@ const crypto = require('crypto');
 const { addListener } = require('../database/connection');
 const connection = require('../database/connection');
 
+const jwt = require('jsonwebtoken');
+const {v4:uuidv4} = require ('uuid') ; 
+
 module.exports = {   
     async index (request, response) {
         const users = await connection('servidores')
@@ -10,7 +13,84 @@ module.exports = {
         .select('*');
     
         return response.json(users);
-    },    
+    },   
+        
+    async signInSrv(request, response) {
+        let email = request.body.email;
+        let senha = request.body.password;
+
+        var encodedVal = crypto.createHash('md5').update(senha).digest('hex');
+        const usuario = await connection('servidores')
+            .where('usrEmail', email)
+            .where('usrPassword', encodedVal)
+            .select('usrId', 'usrNome', 'usrEmail', 'usrCartao')
+            .first();
+          
+        if (!usuario) {
+            return response.status(400).json({ error: 'Não encontrou usuario com este ID'});
+        } 
+
+        let token = jwt.sign({ id: usuario.usrId, name: usuario.usrNome, email: usuario.usrEmail }, process.env.SECRET_JWT, {expiresIn: '1h'});
+        let refreshToken = jwt.sign({ id: usuario.usrId, name: usuario.usrNome, email: usuario.usrEmail }, process.env.SECRET_JWT_REFRESH, {expiresIn: '2h'});
+
+        const user = {
+            id: usuario.usrId,
+            name: usuario.usrNome,
+            email: usuario.usrEmail,
+            cartao: usuario.usrCartao,
+            accessToken: token,
+            refreshToken: refreshToken
+        }
+
+        return response.json(user);
+    },
+
+
+    /*
+    async signInSrv(request, response) {
+        let email = request.body.email;
+        let senha = request.body.password;
+
+        console.log('Email:', email);
+        console.log('Password:', senha);
+
+        const usuario = await connection('servidores')
+            .where('usrEmail', email) 
+            .select(`usrId`, `usrNome`, `usrEmail`, `usrPassword`)
+            .first();
+        
+        if (!usuario) {            
+            return response.status(400).json({ error: 'Não encontrou usuário com este ID'});
+        } 
+
+        console.log(user.usrPassword)
+        let pass = usuario.usrPassword;
+        const match = await bcrypt.compare(senha, pass)
+
+        if(!match) {
+            return response.status(403).send({ auth: false, message: 'User invalid!' });
+        }
+
+        const user = {
+            id: usuario.usrId,
+            name: usuario.usrNome,
+            email: usuario.usrEmail,
+        }
+
+        let token = jwt.sign({ id: user.usrId, name: user.usrNome, email: user.usrEmail, nivel: user.usrNivAcesso }, process.env.SECRET_JWT, {
+            expiresIn: '1h'
+        });
+        let refreshToken = jwt.sign({ id: user.usrId, name: user.usrNome, email: user.usrEmail, nivel: user.usrNivAcesso  }, process.env.SECRET_JWT_REFRESH, {
+            expiresIn: '2h'
+        });
+        console.log(user);
+        
+        return response.json(user, token, refreshToken);
+
+    },
+    */
+
+
 
     async findUser(request, response) {
         var nroCartao = request.params.cartao;
@@ -790,39 +870,44 @@ module.exports = {
     },
 
     async dadServ(request, response) {
-        let id = request.params.carServ;
-        
-        let datProcess = new Date();
-        let year = datProcess.getFullYear();
-        let month = datProcess.getMonth() + 1;
-        let day = parseInt(datProcess.getDate());
-        
-        if (day > 15 ) {
-            month = month + 1;
-            if (month === 13) {
-                month = 1;
-                year = year + 1; 
+        try {
+            const id = request.params.carServ;
+    
+            const today = new Date();
+            let year = today.getFullYear();
+            let month = today.getMonth() + 1;
+            const day = today.getDate();
+    
+            if (day > 15) {
+                month++;
+                if (month > 12) {
+                    month = 1;
+                    year++;
+                }
             }
-        }    
-
-        //console.log(day);
-        //console.log(month);
-        //console.log(year);
-
-        const user = await connection('usrSaldo')            
-            .where('usrServ', id)
-            .where('usrMes',month)
-            .where('usrAno',year)
-            .join('servidores', 'usrCartao', 'usrSaldo.usrServ')
-            .select(['servidores.usrId', 'servidores.usrNome', 'servidores.usrTipContrato', 'servidores.usrStatus','servidores.usrCartao', 'servidores.usrMatricula', 'usrSaldo.usrServ', 'usrSaldo.usrMes', 'usrSaldo.usrAno', 'usrSaldo.usrVlrDisponivel'])        
-
-        if (!user) {
-            return response.status(400).json({ error: 'Não encontrou servidor com este ID'});
-        } 
-
-        //console.log(user)
-
-        return response.json(user);
+    
+            console.log(`Dia: ${day}, Mês: ${month}, Ano: ${year}, ID: ${id}`);
+    
+            const user = await connection('usrSaldo')
+                .where('usrServ', id)
+                .where('usrMes', month)
+                .where('usrAno', year)
+                .join('servidores', 'servidores.usrCartao', '=', 'usrSaldo.usrServ')
+                .select([
+                    'servidores.usrId', 'servidores.usrNome', 'servidores.usrTipContrato',
+                    'servidores.usrStatus', 'servidores.usrCartao', 'servidores.usrMatricula',
+                    'usrSaldo.usrServ', 'usrSaldo.usrMes', 'usrSaldo.usrAno', 'usrSaldo.usrVlrDisponivel'
+                ]);
+    
+            if (user.length === 0) {
+                return response.status(400).json({ error: 'Não encontrou servidor com este ID' });
+            }
+    
+            return response.json(user);
+        } catch (error) {
+            console.error('Erro ao buscar dados do servidor:', error);
+            return response.status(500).json({ error: 'Erro interno do servidor' });
+        }
     },
 
     /*
@@ -864,4 +949,124 @@ module.exports = {
            
     },
     */
+
+    async searchServ(request, response) {
+        var nroCartao = request.params.cartao;        
+        var datProcess = new Date();
+        var year = datProcess.getFullYear();
+        var month = datProcess.getMonth() + 1;
+        var dia = datProcess.getDate();
+
+        if (dia > 15) {
+            month++;
+            if (month === 13) {
+                month = 1;
+                year++;
+            }
+        }
+
+        console.log(nroCartao);
+        console.log(month);
+        console.log(year);
+        console.log(dia);
+         
+        const usuario = await connection('servidores')
+            .where('usrCartao',nroCartao)
+            .select('usrSalLiquido');
+         
+        if (!usuario) {
+            return response.status(400).json({ error: 'Não encontrou servidor com este ID'});
+        } 
+          
+        var vlrLimite = ((usuario[0].usrSalLiquido * 30) / 100);
+        var vlrInicial = 0 ;
+
+        const user = await connection('usrSaldo')
+            .where('usrServ',nroCartao)
+            .where('usrMes',month)
+            .where('usrAno',year)
+            .select('usrVlrDisponivel');
+
+
+        if (!user) {
+            var n = 1; 
+            while (n <= 48) {
+                if (month === 13) { 
+                    month = 1
+                    year = year + 1
+                }  
+                
+                const [saldo] = await connection('usrSaldo').insert({
+                    usrServ: nroCartao,
+                    usrMes: month,
+                    usrAno: year,
+                    usrVlrDisponivel: vlrLimite,
+                    usrVlrUsado: vlrInicial,
+                });
+                n++;  
+                month++;
+            }      
+        }
+
+        var year = datProcess.getFullYear();
+        var month = datProcess.getMonth() + 1;
+        var dia = datProcess.getDate();
+
+        if (dia > 15) {
+            month++;
+            if (month === 13) {
+                month = 1;
+                year++;
+            }
+        }
+        
+        if (user.length === 0) {
+            var n = 1; 
+            while (n <= 48) {
+                if (month === 13) { 
+                    month = 1
+                    year = year + 1
+                }  
+                
+                const [saldo] = await connection('usrSaldo').insert({
+                    usrServ: nroCartao,
+                    usrMes: month,
+                    usrAno: year,
+                    usrVlrDisponivel: vlrLimite,
+                    usrVlrUsado: vlrInicial,
+                });
+                n++;  
+                month++;
+            }      
+        }
+
+        var yearOrigem = datProcess.getFullYear();
+        var monthOrigem = datProcess.getMonth() + 1;
+        var diaOrigem = datProcess.getDate();
+        if (diaOrigem > 15) {
+            monthOrigem++;
+            if (monthOrigem === 13) {
+                monthOrigem = 1;
+                yearOrigem++;
+            }
+        }
+
+        const dados = await connection('usrSaldo')
+        .join('servidores', 'usrCartao', 'usrSaldo.usrServ')
+        .where('usrServ',nroCartao)
+        .where('usrMes',monthOrigem)
+        .where('usrAno',yearOrigem)
+        .select([
+            'servidores.usrId', 'servidores.usrNome', 'servidores.usrTipContrato',
+            'servidores.usrStatus', 'servidores.usrCartao', 'servidores.usrMatricula',
+            'usrSaldo.usrServ', 'usrSaldo.usrMes', 'usrSaldo.usrAno', 'usrSaldo.usrVlrDisponivel'
+        ]);
+        console.log(dados)
+        
+        return response.json(dados);
+    },
+
+    
 };
+
+/* .select(['usrSaldo.usrVlrDisponivel', 'usrSaldo.usrMes', 'usrSaldo.usrAno', 'servidores.usrCartao', 'servidores.usrNome','servidores.usrStatus' ]); */
