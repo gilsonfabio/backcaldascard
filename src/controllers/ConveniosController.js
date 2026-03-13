@@ -28,16 +28,15 @@ module.exports = {
         var encodedVal = crypto.createHash('md5').update(senha).digest('hex');
         const conv = await connection('convenios')
             .where('cnvEmail', emailCnv)
-            .where('cnvPassword', encodedVal)
-
-
-            
+            .where('cnvPassword', encodedVal)            
             .select('cnvId', 'cnvNomFantasia')
             .first();
           
         if (!conv) {
             return response.status(400).json({ error: 'Não encontrou convênio com este ID'});
         } 
+
+        //console.log(conv.cnvNomFantasia);
 
         return response.json(conv);
     },

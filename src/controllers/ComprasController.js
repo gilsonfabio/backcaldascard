@@ -39,14 +39,15 @@ module.exports = {
         let id = request.params.idSrv;
         let status = 'A';
 
+        //         .where('cmpStatus', status) 
+        
         const compras = await connection('compras')
         .where('cmpServidor', id)
-        .where('cmpStatus', status)
         .join('servidores', 'usrId', 'compras.cmpServidor')
         .join('convenios', 'cnvId', 'compras.cmpConvenio')
         .limit(50)
         .orderBy('cmpId', 'desc')
-        .select(['compras.*', 'servidores.usrNome', 'convenios.cnvNomFantasia']);
+        .select(['compras.cmpId', 'compras.cmpEmissao', 'compras.cmpHorEmissao', 'compras.cmpConvenio', 'compras.cmpQtdParcela', 'compras.cmpVlrCompra', 'compras.cmpStatus', 'servidores.usrNome', 'convenios.cnvNomFantasia']);
 
         return response.json(compras);
     },  
@@ -755,7 +756,7 @@ module.exports = {
         let vlrZerado = 0.00;
         month = month + 1;
         let vet = 1;
-        while (vet <= 300) { 
+        while (vet <= 400) { 
             const user = await connection('servidores')
             .where('usrId', vet)
             .select('*');
@@ -939,4 +940,317 @@ module.exports = {
 
     },
 
+    /*
+    async aceParCompras (request, response) {
+        let status = 'A';
+        let qtd = 1;
+        let datInicio = request.body.dtInicial;
+        console.log('Data Inicial:', datInicio);
+
+        let day = '01';
+        let year = datInicio.substring(0, 4);
+        let month = datInicio.substring(5, 7);
+
+        let datVencto = new Date(year, parseInt(month) - 1, parseInt(day));
+        console.log('Data selecionada:', datVencto);
+
+        //let vet = 144;
+        //while(vet < 3600) {
+        
+        const compra = await connection('compras')
+            .where('cmpEmissao', datVencto)
+            .where('cmpQtdParcela', '>', qtd)
+            .where('cmpStatus', status)
+            .select('*');
+            if (compra.length > 0) {
+                let datProcess = new Date();
+                let year = datProcess.getFullYear();
+                let month = datProcess.getMonth();
+                let day = datProcess.getDate();
+                let dayVct = 15;    
+
+                let horProcess = moment().format('hh:mm:ss');        
+                let idCompra = compra.cmpId;    
+        
+                let vlrParcela = 0.00;
+                vlrParcela = parseFloat((compra.cmpVlrCompra) / compra.cmpQtdParcela);
+                let vlrResult = 0.00;
+                vlrResult = parseFloat((vlrParcela) * compra.cmpQtdParcela);
+                let vlrResto = 0.00;
+                vlrResto = parseFloat((compra.cmpVlrCompra) - (vlrResult).toFixed(2));
+
+                let staParcela = 'A';
+
+                console.log(compra.cmpId)
+                console.log(compra.cmpQtdParcela)
+                console.log(vlrParcela)
+                console.log(vlrResult)
+                console.log(vlrResto)
+
+                let parc = 1;
+                while (parc <= compra.cmpQtdParcela) {
+                    const item = await connection('cmpParcelas')
+                    .where('parIdCompra', idCompra)
+                    .where('parNroParcela', parc)
+                    .select('*');
+
+                    let vctParcela = '';
+                    let vlrProcess = 0.00;
+                    let staParcela = 'A';
+
+                    if (item.length > 0 ) {
+                        console.log('parcela:', parc, item[0].parVctParcela )
+                        vctParcela = item[0].parVctParcela;
+                        vlrParcela = item[0].parVlrParcela;
+                        month = item[0].parVctParcela.getMonth();
+                        year = item[0].parVctParcela.getFullYear();
+                        console.log('Parcela existente:', parc, 'Vencto:' , vctParcela, 'Valor:', vlrProcess)   
+                    }else {
+                        month = month + 1;                        
+                        if (month === 13 ) {
+                            year = year + 1 
+                            month = 1
+                        }                       
+                        day = 15;
+                        
+                        let vctParcela = new Date(year, month, day);
+                        let vlrProcess = vlrParcela;
+
+                        //const [parId] = await connection('cmpParcelas').insert({
+                        //    parIdCompra: idCompra,
+                        //    parNroParcela: parc,
+                        //    parVctParcela: vctParcela,
+                        //    parVlrCompra: vlrProcess,
+                        //    parVlrParcela: vlrProcess,
+                        //    parStaParcela: staParcela,                
+                        //});
+
+                        console.log('Nova Parcela gerada:', parc, 'Vencto:' , vctParcela, 'Valor:', vlrProcess)                        
+                    }    
+                    parc = parc + 1;
+                }
+            }
+            //else {
+            //    console.log('Compra não encontrada', vet)
+            //}    
+        //    vet = vet + 1;
+        //}
+
+        return response.status(200).send();
+    },   
+
+    */
+
+    async aceParCompras(request, response) {
+        try {
+            const status = 'A';
+            const qtdMinima = 1;
+    
+            // --- CORREÇÃO NA FORMAÇÃO DAS DATAS ---
+            // A lógica de zerar a hora está correta para garantir uma comparação de dias inteiros.
+            let datInicio = new Date('2024-12-01T03:00:00.000Z'); // Usar UTC para evitar problemas de fuso
+            const datHoje = new Date();
+    
+            datInicio.setUTCHours(0, 0, 0, 0); 
+            datHoje.setUTCHours(0, 0, 0, 0);
+    
+            while (datInicio <= datHoje) {
+                // 1. Formatar a data para a busca no banco de dados
+                // Isso cria uma string 'YYYY-MM-DD', que é um formato seguro para queries SQL.
+                const diaFormatadoParaBusca = datInicio.toISOString().slice(0, 10);
+                console.log(`\n--- Processando dia: ${diaFormatadoParaBusca} ---`);
+          
+                // 2. Corrigir a busca usando a data formatada
+                const listaDeCompras = await connection('compras')
+                    .where('cmpEmissao', diaFormatadoParaBusca) 
+                    .where('cmpQtdParcela', '>', qtdMinima)
+                    .where('cmpStatus', status)
+                    .select('*');
+    
+                if (listaDeCompras.length === 0) {
+                    console.log('Nenhuma compra encontrada para este dia.');
+                }
+    
+                // 3. CORREÇÃO CRÍTICA: Iterar sobre a lista de compras retornada
+                // 'listaDeCompras' é um array. Precisamos processar cada 'compra' dentro dele.
+                for (const compra of listaDeCompras) {
+                    console.log(`  → Processando Compra ID: ${compra.cmpId}`);
+    
+                    // --- Validação de Dados Essenciais ---
+                    const valorCompra = parseFloat(compra.cmpVlrCompra);
+                    const qtdParcelas = parseInt(compra.cmpQtdParcela, 10);
+    
+                    if (isNaN(valorCompra) || isNaN(qtdParcelas) || qtdParcelas <= 0) {
+                        console.error(`    ERRO: Dados inválidos para a compra ${compra.cmpId}. Valor ou Qtd de Parcelas ausente/inválido. Pulando...`);
+                        continue; // Pula para a próxima compra
+                    }
+    
+                    const idCompra = compra.cmpId;
+                    const staParcela = 'A';
+                    const datProcess = new Date(compra.cmpEmissao); // A data da compra atual
+    
+                    // --- Lógica de Cálculo de Parcelas e Vencimentos ---
+                    const vlrParcelaBase = parseFloat((valorCompra / qtdParcelas).toFixed(2));
+                    const vlrTotalCalculado = vlrParcelaBase * qtdParcelas;
+                    const vlrResto = parseFloat((valorCompra - vlrTotalCalculado).toFixed(2));
+    
+                    for (let i = 1; i <= qtdParcelas; i++) {
+                        const nroParcela = i;
+                        
+                        // Lógica de vencimento mais clara e segura
+                        const dataBaseVencimento = new Date(datProcess); // Cria uma cópia para não modificar a original
+                        const diaDaCompra = dataBaseVencimento.getUTCDate();
+                        
+                        // Calcula quantos meses adicionar. Se a compra foi depois do dia 15, a 1ª parcela já é no mês seguinte.
+                        const mesesAdicionais = (diaDaCompra > 15) ? i : i - 1;
+                        
+                        dataBaseVencimento.setUTCMonth(dataBaseVencimento.getUTCMonth() + mesesAdicionais);
+                        dataBaseVencimento.setUTCDate(15); // Dia do vencimento é sempre 15
+    
+                        const vctParcela = dataBaseVencimento;
+    
+                        // Adiciona o valor residual na primeira parcela para não perder centavos
+                        const vlrProcess = (nroParcela === 1) ? vlrParcelaBase + vlrResto : vlrParcelaBase;
+    
+                        const parcelaExistente = await connection('cmpParcelas')
+                            .where('parIdCompra', idCompra)
+                            .where('parNroParcela', nroParcela)
+                            .first(); // .first() é mais eficiente para verificar existência
+    
+                        if (!parcelaExistente) {   
+                            console.log(`    Criando parcela ${nroParcela}/${qtdParcelas}, Vcto: ${vctParcela.toISOString().slice(0, 10)}, Valor: ${vlrProcess.toFixed(2)}`);
+                            // DESCOMENTE PARA INSERIR NO BANCO
+                            await connection('cmpParcelas').insert({
+                                parIdCompra: idCompra,
+                                parNroParcela: nroParcela,
+                                parVctParcela: vctParcela,
+                                parVlrCompra: vlrProcess,
+                                parVlrParcela: vlrProcess,
+                                parStaParcela: staParcela,                
+                            });
+                        } else { 
+                            console.log(`    Verificando parcela ${nroParcela}/${qtdParcelas}, Vcto: ${vctParcela.toISOString().slice(0, 10)}, Valor: ${vlrProcess.toFixed(2)}`);
+                            // DESCOMENTE PARA ATUALIZAR
+                            await connection('cmpParcelas')
+                                .where('parIdCompra', idCompra)
+                                .update({
+                                    parVlrCompra: vlrProcess,
+                                    parVlrParcela: vlrProcess              
+                                });
+                        }                 
+                    }
+                }
+                // Incrementa o dia para a próxima iteração do loop 'while'
+                datInicio.setUTCDate(datInicio.getUTCDate() + 1);
+            } 
+    
+            console.log('\nProcessamento de todas as datas concluído com sucesso.');
+            return response.status(200).send({ message: 'Processamento concluído com sucesso.' });
+    
+        } catch (error) {
+            console.error('Erro fatal ao processar compras:', error);
+            return response.status(500).send({ 
+                error: 'Erro interno no servidor.',
+                details: error.message 
+            });
+        }
+    },
+   
+    async aceParIdCmp(request, response) {
+        try {
+            const status = 'A';
+            const qtdMinima = 1;
+
+            let idCmp = request.body.id;
+            const datHoje = new Date();
+
+            //datInicio.setHours(0, 0, 0, 0);
+            datHoje.setHours(0, 0, 0, 0);
+
+            //console.log('Processando dia:', datInicio.toISOString().slice(0, 10));
+
+            // Buscar compras com cmpEmissao nesse dia
+            const compras = await connection('compras')
+                .where('cmpId', idCmp)
+                .where('cmpQtdParcela', '>', qtdMinima)
+                .where('cmpStatus', status)
+                .select('*');
+
+            for (const item of compras) {
+                const idCompra = item.cmpId;
+                const qtdParcelas = item.cmpQtdParcela;
+                const valorCompra = parseFloat(item.cmpVlrCompra);
+
+                const vlrParcela = parseFloat((valorCompra / qtdParcelas).toFixed(2));
+                const vlrTotal = vlrParcela * qtdParcelas;
+                const vlrResto = parseFloat((valorCompra - vlrTotal).toFixed(2));
+
+                const emissao = new Date(item.cmpEmissao);
+                let year = emissao.getFullYear();
+                let month = emissao.getMonth(); // 0-11
+
+                for (let i = 1; i <= qtdParcelas; i++) {
+                    const parcelaExistente = await connection('cmpParcelas')
+                    .where({ parIdCompra: idCompra, parNroParcela: i })
+                    .first();
+
+                    if (!parcelaExistente) {
+                        let vencimento = new Date(year, month + i , 15);
+                        let valor = i === qtdParcelas
+                        ? vlrParcela + vlrResto
+                        : vlrParcela;
+
+                        await connection('cmpParcelas').insert({
+                            parIdCompra: idCompra,
+                            parNroParcela: i,
+                            parVctParcela: vencimento,
+                            parVlrCompra: valor,
+                            parVlrParcela: valor,
+                            parStaParcela: 'A',
+                        });
+
+                        console.log(`→ Parcela ${i} criada para compra ${idCompra}, vencimento: ${vencimento.toISOString().slice(0, 10)}, valor: ${valor}`);
+                    } else {
+                        console.log(`✓ Parcela ${i} já existe para compra ${idCompra}`);
+                    }        
+                }
+            }
+            return response.status(200).send({ message: 'Processamento concluído com sucesso.' });
+        } catch (error) {
+            console.error('Erro ao processar compras:', error);
+            return response.status(500).send({ error: 'Erro interno no servidor.' });
+        }   
+    },
+
+    async reajuste(request, response) {
+        const antParcela = parseFloat(request.body.vlrAnterior);
+        const novParcela = parseFloat(request.body.vlrAtual);
+        let datInicio = new Date('2025-07-15T03:00:00.000Z');
+        console.log('Data Inicial: ', datInicio);
+        console.log('vlr. Anterior:', antParcela);
+        console.log('vlr. Atual...:', novParcela);
+
+        const compras = await connection('cmpParcelas')
+            .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
+            .join('servidores', 'usrId', 'compras.cmpServidor')
+            .join('convenios', 'cnvId', 'compras.cmpConvenio')
+            .where('parVctParcela', '>=', datInicio)
+            .where('parVlrCompra', antParcela)
+            .where('compras.cmpConvenio', 23)
+            .where('parStaParcela', 'A')
+            .update({
+                parVlrCompra: novParcela,
+                parVlrParcela: novParcela  
+            });
+
+        if (!compras) {
+            return response.status(402).json({ error: 'Não encontrou compras nesse periodo'});
+        }   
+
+        //return response.json(compras);
+
+        return response.status(200).json({ msn: 'Reajuste processado com sucesso!'});
+
+    },
 };
+

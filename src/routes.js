@@ -19,6 +19,7 @@ const ParcelasController = require('./controllers/ParcelasController');
 const DownloadsController = require('./controllers/DownloadsController');
 const BairrosController = require('./controllers/BairrosController');
 const TiposController = require('./controllers/TiposController');
+const OfertasController = require('./controllers/OfertasController');
 
 routes.get('/', (request, response) => {
     response.json({
@@ -38,6 +39,9 @@ routes.get('/verifUser/:cartao', UsersController.verifUser);
 routes.put('/altservidor/:idSrv', UsersController.updServidor);
 routes.get('/classUser/:search', UsersController.classUser);
 routes.get('/cmpLibera/:cartao', UsersController.liberaUsr);
+
+routes.post('/signInSrv', UsersController.signInSrv);
+routes.get('/dadosUser/:id', UsersController.dadosUser);
 
 //routes.put('/deletaUsr/:idSrv', UsersController.delUser);
 
@@ -124,10 +128,16 @@ routes.get('/ultCompras/:id', ComprasController.ultCompras);
 
 routes.get('/verifCompras', ComprasController.verifCompras);
 
+routes.post('/aceParCompras', ComprasController.aceParCompras);
+
 routes.put('/corTotCmp', ComprasController.corTotCmp);
 routes.post('/aceTotCmp', ComprasController.aceTotCmp);
 
+routes.post('/aceParIdCmp', ComprasController.aceParIdCmp);
+
 routes.post('/mosCompras', ComprasController.mosCompras);
+
+routes.post('/reajuste', ComprasController.reajuste);
 
 routes.get('/findCompras/:datVencto/:regStatus', ComprasController.cmpVencto);
 routes.get('/totCompras/:datVencto/:regStatus', ComprasController.totCompras);
@@ -183,6 +193,8 @@ routes.put('/alttipo/:tipId', TiposController.updateTip);
 routes.get('/corSaldo', DownloadsController.corSaldo);
 routes.put('/corCmpServ', ComprasController.corCmpServ);
 routes.put('/corCmpConv', OrgaosController.corCmpConv);
+
+routes.get('/ofertas', OfertasController.index);
 
 //routes.get('/verCartao/:nroCartao', ParametrosController.verCartao);
 

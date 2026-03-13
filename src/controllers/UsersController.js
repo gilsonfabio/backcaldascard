@@ -90,7 +90,95 @@ module.exports = {
     },
     */
 
+    async dadosUser(request, response) {
+        let id = request.params.id;
 
+        var datProcess = new Date();
+        var day = datProcess.getDate();
+        var year = datProcess.getFullYear();
+        var month = datProcess.getMonth() + 1;
+
+        if (day > 15 ) {
+            month++
+            if (month === 13 ) {
+                month = 1
+                year++
+            }    
+        }
+
+        let user = await connection('servidores')
+        .where('servidores.usrId', id)
+        .leftJoin('usrSaldo', function () {
+            this.on('usrSaldo.usrServ', '=', 'servidores.usrCartao')
+            .andOn('usrSaldo.usrMes', '=', connection.raw('?', [month]))
+            .andOn('usrSaldo.usrAno', '=', connection.raw('?', [year]))
+        })
+        .join('tipcontratos', 'tipcontratos.idTip', '=', 'servidores.usrTipContrato')
+        .select([
+            'usrSaldo.usrMes',
+            'usrSaldo.usrAno',
+            'usrSaldo.usrVlrUsado',
+            'usrSaldo.usrVlrDisponivel',
+            'servidores.usrNome',
+            'servidores.usrMatricula',
+            'servidores.usrId',
+            'servidores.usrStatus',
+            'servidores.usrTipContrato',
+            'servidores.usrCartao',
+            'servidores.usrSalLiquido',
+            'tipcontratos.tipDescricao',
+            'tipcontratos.tipParcelas'
+        ]);
+
+        if (!user || user.length === 0) {
+            return response.status(400).json({
+            error: 'Não encontrou servidor com este ID'
+        });
+    }
+
+    let dados = user[0];
+
+    if (!dados.usrMes) {
+
+        const cartao = dados.usrCartao;
+        const vlrLimite = (dados.usrSalLiquido * 30) / 100;
+
+        await connection('usrSaldo').insert({
+            usrServ: cartao,
+            usrMes: month,
+            usrAno: year,
+            usrVlrUsado: 0.00,
+            usrVlrDisponivel: vlrLimite
+        });
+
+        // BUSCAR NOVAMENTE OS DADOS
+        user = await connection('servidores')
+            .where('servidores.usrId', id)
+            .leftJoin('usrSaldo', function () {
+            this.on('usrSaldo.usrServ', '=', 'servidores.usrCartao')
+                .andOn('usrSaldo.usrMes', '=', connection.raw('?', [month]))
+                .andOn('usrSaldo.usrAno', '=', connection.raw('?', [year]))
+            })
+            .join('tipcontratos', 'tipcontratos.idTip', '=', 'servidores.usrTipContrato')
+            .select([
+                'usrSaldo.usrMes',
+                'usrSaldo.usrAno',
+                'usrSaldo.usrVlrUsado',
+                'usrSaldo.usrVlrDisponivel',
+                'servidores.usrNome',
+                'servidores.usrMatricula',
+                'servidores.usrId',
+                'servidores.usrStatus',
+                'servidores.usrTipContrato',
+                'servidores.usrCartao',
+                'servidores.usrSalLiquido',
+                'tipcontratos.tipDescricao',
+                'tipcontratos.tipParcelas'
+            ]);
+        }
+
+        return response.json(user);
+    },
 
     async findUser(request, response) {
         var nroCartao = request.params.cartao;
