@@ -594,25 +594,20 @@ module.exports = {
     },
     
     async pdfExtAdm (request, response) {
-        let inicio = request.params.dataInicial;
+        let inicio = request.params.datVencto;
 
-        let datProcess = new Date(inicio);
-        let year = datProcess.getFullYear();
-        let month = datProcess.getMonth() + 1;
-        
-        //console.log(year);
-        //console.log(month);
+        let [year, month] = inicio.split("-");
+        month = Number(month);
+        year = Number(year);
 
         const totaliza = await connection('totVdaCnv')
-        .where('tcnvMes',month)
-        .where('tcnvAno',year)
-        .join('convenios', 'cnvId', 'totVdaCnv.tcnvId')
-        .select(['totVdaCnv.*', 'convenios.cnvCpfCnpj', 'convenios.cnvNomFantasia']);
-        
-        //console.log(totaliza);
+            .where('tcnvMes', month)
+            .where('tcnvAno', year)
+            .join('convenios', 'cnvId', 'totVdaCnv.tcnvId')
+            .select(['totVdaCnv.*', 'convenios.cnvCpfCnpj', 'convenios.cnvNomFantasia']);
 
         return response.json(totaliza);
-    }, 
+    },
 
     async totConvenios (request, response) {
         let inicio = request.params.datInicial;

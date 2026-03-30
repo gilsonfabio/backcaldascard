@@ -59,6 +59,7 @@ routes.post('/newadmin', AdminController.create);
 routes.get('/searchAdmin/:idAdm', AdminController.searchAdmin);
 routes.put('/updPassAdmin/:emailUsuario', AdminController.updPassAdmin);
 routes.put('/altadmin/:idAdm', AdminController.updAdmin);
+routes.post('/signInAdm', AdminController.signInAdm);
 
 routes.get('/secretarias', SecretController.index);
 routes.post('/newsecretaria', SecretController.create);
@@ -179,7 +180,7 @@ routes.get('/pdfVctCmpCnv/:datInicial/:datFinal/:cnvId', PdfsController.pdfVctCm
 routes.get('/pdfEmiCmpCnv/:datInicial/:datFinal/:cnvId', PdfsController.pdfEmiCmpCnv);
 routes.get('/pdfEmiCmpSrv:datInicial/:datFinal/:srvId', PdfsController.pdfEmiCmpSrv);
 
-routes.get('/pdfExtAdm/:dataInicial', PdfsController.pdfExtAdm);
+routes.get('/pdfExtAdm/:datVencto', PdfsController.pdfExtAdm);
 routes.get('/pdfExtOrgao/:dataInicial', PdfsController.pdfExtOrgao);
 
 routes.get('/downloadTxt/:datInicial/:orgId/:status', DownloadsController.downTexto);
@@ -193,6 +194,7 @@ routes.put('/alttipo/:tipId', TiposController.updateTip);
 routes.get('/corSaldo', DownloadsController.corSaldo);
 routes.put('/corCmpServ', ComprasController.corCmpServ);
 routes.put('/corCmpConv', OrgaosController.corCmpConv);
+routes.put('/aceCmpCnv', ComprasController.aceCmpCnv);
 
 routes.get('/ofertas', OfertasController.index);
 

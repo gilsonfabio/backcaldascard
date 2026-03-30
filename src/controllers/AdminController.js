@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const connection = require('../database/connection');
+const jwt = require("jsonwebtoken");
 
 module.exports = {   
     async index (request, response) {
@@ -24,6 +25,35 @@ module.exports = {
         } 
 
         return response.json(admin);
+    },
+
+    async signInAdm(request, response) {
+        let email = request.body.email;
+        let senha = request.body.password;
+
+        var encodedVal = crypto.createHash('md5').update(senha).digest('hex');
+        const admin = await connection('administrator')
+            .where('admEmail', email)
+            .where('admSenha', encodedVal)
+            .select('admId', 'admNome', 'admNivAcesso')
+            .first();
+          
+        if (!admin) {
+            return response.status(400).json({ error: 'Não encontrou usuario com este ID'});
+        } 
+
+        let token = jwt.sign({ id: admin.admId, name: admin.admNome, email: admin.admEmail }, process.env.SECRET_JWT, {expiresIn: '1h'});
+        let refreshToken = jwt.sign({ id: admin.admId, name: admin.admNome, email: admin.admEmail }, process.env.SECRET_JWT_REFRESH, {expiresIn: '2h'});
+
+        const user = {
+            id: admin.admId,
+            name: admin.admNome,
+            email: admin.admEmail,
+            accessToken: token,
+            refreshToken: refreshToken
+        }
+
+        return response.json(user);
     },
 
     async login(request, response) {
