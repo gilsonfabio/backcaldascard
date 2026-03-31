@@ -24,7 +24,7 @@ module.exports = {
                 this.where('usrStatus', srvStatus)
                 this.select('usrId').from('servidores');
             })
-            .select(['servidores.usrMatricula', 'servidores.usrNome', 'servidores.usrStatus', 'usrSaldo.usrVlrUsado',])
+            .select(['servidores.usrId', 'servidores.usrMatricula', 'servidores.usrNome', 'servidores.usrStatus', 'usrSaldo.usrVlrUsado',])
        
         return response.json(saldo);  
         

@@ -745,8 +745,9 @@ module.exports = {
     //..........................................................................
 
     async corCmpServ(request, response) {
+        let datProcess = new Date(request.body.datVencto);
         let status = 'A';
-        let datProcess = new Date();
+        //let datProcess = new Date();
         let day = '15';
         let year = datProcess.getFullYear();
         let month = datProcess.getMonth() ;
