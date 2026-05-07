@@ -810,7 +810,7 @@ module.exports = {
         var datAdmissao = new Date();
         var datNasConjuge = new Date();
         var status = 'A'; 
-        var tipo_user = 'CM';
+        var tipo_user = 1;
 
         var auxbairro = 1;
         var auxcargo = 1;

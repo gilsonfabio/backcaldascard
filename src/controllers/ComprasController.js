@@ -1382,5 +1382,236 @@ module.exports = {
         }    
         return response.status(200).json({ error: 'Verificado valores de venda dos convênios'});
     },
+
+    async verifCompras(request, response) {
+        const trx = await connection.transaction();
+
+        try {
+            const compras = await trx('compras')
+                .join('servidores', 'usrId', 'compras.cmpServidor')
+                .where('compras.cmpQtdParcela', '>', 1)
+                .select([
+                    'compras.cmpId',
+                    'compras.cmpServidor',
+                    'compras.cmpConvenio',
+                    'compras.cmpQtdParcela',
+                    'compras.cmpVlrCompra',
+                    'servidores.usrCartao'
+                ]);
+
+            console.log('========================================');
+            console.log(`TOTAL DE COMPRAS: ${compras.length}`);
+            console.log('========================================');
+
+            for (const compra of compras) {
+                const cmpId = compra.cmpId;
+                const cmpQtdParcela = compra.cmpQtdParcela;
+                const cmpVlrCompra = compra.cmpVlrCompra;
+
+                console.log('\n----------------------------------------');
+                console.log(`COMPRA ID: ${cmpId}`);
+
+                // 🔹 Busca parcelas existentes
+                const parcelasExistentes = await trx('cmpParcelas')
+                    .where('parIdCompra', cmpId)
+                    .select('parNroParcela');
+
+                const numerosExistentes = parcelasExistentes.map(p => p.parNroParcela);
+
+                if (numerosExistentes.length >= cmpQtdParcela) {
+                    console.log('✔ Já possui todas parcelas');
+                    continue;
+                }
+
+                // 🔹 Variáveis base
+                let datProcess = new Date();
+                let year = datProcess.getFullYear();
+                let month = datProcess.getMonth();
+                let day = datProcess.getDate();
+                let dayVct = 15;
+
+                let vlrParcela = parseFloat((cmpVlrCompra / cmpQtdParcela).toFixed(2));
+                let vlrResult = parseFloat((vlrParcela * cmpQtdParcela).toFixed(2));
+                let vlrResto = parseFloat((cmpVlrCompra - vlrResult).toFixed(2));
+
+                let staParcela = 'A';
+
+                for (let i = 1; i <= cmpQtdParcela; i++) {
+
+                    if (numerosExistentes.includes(i)) {
+                        continue;
+                    }
+
+                    if (i === 1) {
+                        if (day > 15) {
+                            month++;
+                            if (month === 12) {
+                                month = 0;
+                                year++;
+                            }
+                        }
+                    } else {
+                        month++;
+                        if (month === 12) {
+                            month = 0;
+                            year++;
+                        }
+                    }
+
+                    let vctParcela = new Date(year, month, dayVct);
+
+                    let vlrProcess = (i === 1)
+                        ? vlrParcela + vlrResto
+                        : vlrParcela;
+
+                    const parcelaObj = {
+                        parIdCompra: cmpId,
+                        parNroParcela: i,
+                        parVctParcela: vctParcela,
+                        parVlrCompra: vlrProcess,
+                        parVlrParcela: vlrProcess,
+                        parStaParcela: staParcela,
+                    };
+
+                    console.log('➕ Inserindo parcela:', parcelaObj);
+
+                    await trx('cmpParcelas').insert(parcelaObj);
+                }
+            }
+
+            await trx.commit();
+
+            console.log('\n========================================');
+            console.log('PROCESSAMENTO FINALIZADO COM SUCESSO');
+            console.log('========================================');
+
+            return response.status(200).json({
+                message: 'Parcelas verificadas e inseridas com sucesso!'
+            });
+
+        } catch (error) {
+            await trx.rollback();
+
+            console.error('❌ ERRO:', error);
+
+            return response.status(500).json({
+                error: 'Erro ao processar parcelas'
+            });
+        }
+    },
+
+    
+    async verParcelas(request, response) {
+    try {
+
+        await connection.transaction(async trx => {
+
+            const compras = await trx('compras')
+                .where('cmpQtdParcela', '>', 1)
+                .select([
+                    'cmpId',
+                    'cmpQtdParcela'
+                ]);
+
+            let totalAtualizadas = 0;
+
+            for (const compra of compras) {
+
+                const parcelas = await trx('cmpParcelas')
+                    .where('parIdCompra', compra.cmpId)
+                    .where('parStaParcela', 'A')
+                    .orderBy('parNroParcela', 'asc');
+
+                if (!parcelas.length) continue;
+
+                const dataBase = new Date(parcelas[0].parVctParcela);
+
+                for (let i = 0; i < parcelas.length; i++) {
+
+                    const parcela = parcelas[i];
+
+                    const dataCorreta = gerarDataParcela(dataBase, i);
+                    const dataAtual = new Date(parcela.parVctParcela);
+
+                    dataAtual.setHours(0, 0, 0, 0);
+                    dataCorreta.setHours(0, 0, 0, 0);
+
+                    // valida numeração
+                    if (parcela.parNroParcela !== i + 1) {
+                        console.log('⚠️ Numeração inconsistente:', {
+                            compra: compra.cmpId,
+                            parcela: parcela.parId,
+                            numeroBanco: parcela.parNroParcela,
+                            numeroEsperado: i + 1
+                        });
+                    }
+
+                    // só atualiza se necessário
+                    if (dataAtual.getTime() !== dataCorreta.getTime()) {
+
+                        await trx('cmpParcelas')
+                            .where({
+                                parIdCompra: parcela.parIdCompra,
+                                parNroParcela: parcela.parNroParcela
+                            })
+                            .update({
+                                parVctParcela: formatDate(dataCorreta)
+                            });
+
+                        console.log('✅ Atualizada:', {
+                            compra: compra.cmpId,
+                            parcela: parcela.parId,
+                            numero: parcela.parNroParcela,
+                            de: formatDate(dataAtual),
+                            para: formatDate(dataCorreta)
+                        });
+
+                        totalAtualizadas++;
+                    }
+                }
+            }
+
+            console.log(`🎯 Total de parcelas atualizadas: ${totalAtualizadas}`);
+
+            return response.json({
+                message: 'Atualização concluída com sucesso',
+                totalAtualizadas
+            });
+
+        });
+
+    } catch (error) {
+        console.error(error);
+        return response.status(500).json({
+            error: 'Erro ao atualizar parcelas'
+        });
+    }
+},
+
 };
+
+// 🔧 Função que gera a data correta (sempre dia 15)
+function gerarDataParcela(dataBase, numeroParcela) {
+    const d = new Date(dataBase);
+
+    d.setDate(1); // evita bug de mês
+    d.setMonth(d.getMonth() + numeroParcela);
+
+    d.setDate(15); // regra fixa
+
+    return d;
+}
+
+
+// 🔧 Função auxiliar para formatar data
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
+
+
 

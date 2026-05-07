@@ -198,6 +198,9 @@ routes.put('/aceCmpCnv', ComprasController.aceCmpCnv);
 
 routes.get('/ofertas', OfertasController.index);
 
+routes.get('/verifCompras', ComprasController.verifCompras);
+routes.get('/verParcelas', ComprasController.verParcelas);
+
 //routes.get('/verCartao/:nroCartao', ParametrosController.verCartao);
 
 //routes.post('/gerNewCard', ParametrosController.gerNewCard);

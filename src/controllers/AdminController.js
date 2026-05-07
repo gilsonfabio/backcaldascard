@@ -1,6 +1,10 @@
 const crypto = require('crypto');
 const connection = require('../database/connection');
 const jwt = require("jsonwebtoken");
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
+const {v4:uuidv4} = require ('uuid') ;
 
 module.exports = {   
     async index (request, response) {
@@ -31,16 +35,35 @@ module.exports = {
         let email = request.body.email;
         let senha = request.body.password;
 
-        var encodedVal = crypto.createHash('md5').update(senha).digest('hex');
         const admin = await connection('administrator')
             .where('admEmail', email)
-            .where('admSenha', encodedVal)
-            .select('admId', 'admNome', 'admNivAcesso')
+            .select('admId', 'admNome', 'admNivAcesso', 'admSenha', 'admAtuPass')
             .first();
           
         if (!admin) {
             return response.status(400).json({ error: 'Não encontrou usuario com este ID'});
         } 
+         
+        if (admin.admAtuPass === null) {
+            let idAdm = admin.admId;
+            let snhCrypt = await bcrypt.hash(senha, saltRounds);
+            let datAtual = new Date();
+            await connection('administrator')
+            .where('admId', idAdm)   
+            .update({
+                admSenha: snhCrypt, 
+                admAtuPass: datAtual, 
+            });
+
+            return response.json({forceRelogin: true, message: "Usuário Atualizado! Faça login novamente."});
+        } else {
+             let pass = admin.admSenha;
+            const match = await bcrypt.compare(senha, pass)
+
+            if(!match) {
+                return response.status(403).send({ auth: false, message: 'User invalid!' });
+            }
+        }
 
         let token = jwt.sign({ id: admin.admId, name: admin.admNome, email: admin.admEmail }, process.env.SECRET_JWT, {expiresIn: '1h'});
         let refreshToken = jwt.sign({ id: admin.admId, name: admin.admNome, email: admin.admEmail }, process.env.SECRET_JWT_REFRESH, {expiresIn: '2h'});
@@ -56,6 +79,48 @@ module.exports = {
         return response.json(user);
     },
 
+    async loginSrv(request, response) {
+        let email = request.body.email;
+        let senha = request.body.password;
+
+        console.log('Email:', email);
+        console.log('Password:', senha);
+
+        const admin = await connection('administrator')
+            .where('admEmail', email) 
+            .select(`admId`, `admNome`, `admEmail`, `admPassword`)
+            .first();
+        
+        if (!admin) {            
+            return response.status(400).json({ error: 'Não encontrou administrador com este ID'});
+        } 
+
+        console.log(admin.admPassword)
+        let pass = admin.admPassword;
+        const match = await bcrypt.compare(senha, pass)
+
+        if(!match) {
+            return response.status(403).send({ auth: false, message: 'User invalid!' });
+        }
+
+        const adm = {
+            id: admin.usrId,
+            name: admin.usrNome,
+            email: admin.usrEmail,
+        }
+
+        let token = jwt.sign({ id: admin.admId, name: admin.admNome, email: admin.admEmail, nivel: admin.admNivAcesso }, process.env.SECRET_JWT, {
+            expiresIn: '1h'
+        });
+        let refreshToken = jwt.sign({ id: admin.admId, name: admin.admNome, email: admin.admEmail, nivel: admin.admNivAcesso }, process.env.SECRET_JWT_REFRESH, {
+            expiresIn: '2h'
+        });
+        console.log(user);
+        
+        return response.json(adm, token, refreshToken);
+
+    },
+    
     async login(request, response) {
         const { email, password } = request.body;
 
