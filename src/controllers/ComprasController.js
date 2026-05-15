@@ -206,9 +206,28 @@ module.exports = {
                 const cnv = await connection('convenios')
                 .where('cnvId',convenio)
                 .join('atividades', 'atvId', 'convenios.cnvAtividade')
-                .select(['cnvId','atividades.atvTaxAdm']);
+                .select(['cnvId','atividades.atvTaxAdm', 'atividades.atvId']);
             
                 let taxa = parseInt(cnv[0].atvTaxAdm)
+
+                //........ Buscar taxa administrativa mensal .........................................
+
+                let idAtv = cnv[0].atvId;
+                const txa = await connection('taxMensal')
+                    .where('txaMenAtvId', idAtv)
+                    .where('txaMenMes', mesParc)
+                    .where('txaMenAno', anoParc)
+                    .join('atividades', 'atvId', 'taxMensal.txaMenAtvId')
+                    .select(['txaMenId', 'txaMenIndice', 'atividades.atvTaxAdm'])
+                    .first();
+
+                if (!txa) {
+                    return response.status(404).json({
+                        error: 'Taxa mensal não encontrada'
+                    });
+                }
+
+                taxa = parseInt(txa.txaMenIndice);
             
                 let perSist = 20;
                 let auxParcela = vlrProcess;
@@ -629,10 +648,32 @@ module.exports = {
                     const cnv = await connection('convenios')
                     .where('cnvId',id)
                     .join('atividades', 'atvId', 'convenios.cnvAtividade')
-                    .select(['cnvId','atividades.atvTaxAdm']);
+                    .select(['cnvId','atividades.atvTaxAdm', 'atividades.atvId']);
     
                     //console.log('Taxa:', cnv[0].atvTaxAdm)
                     let taxa = parseInt(cnv[0].atvTaxAdm);
+
+                    //........ Buscar taxa administrativa mensal .........................................
+
+                    let idAtv = cnv[0].atvId;
+                    let mesTxa = month + 1 
+                    const txa = await connection('taxMensal')
+                        .where('txaMenAtvId', idAtv)
+                        .where('txaMenMes', mesTxa)
+                        .where('txaMenAno', year)
+                        .join('atividades', 'atvId', 'taxMensal.txaMenAtvId')
+                       .select(['txaMenId', 'txaMenIndice', 'atividades.atvTaxAdm'])
+                        .first();
+
+                    console.log('mes/ano:', mesTxa, '/', year)
+
+                    if (!txa) {
+                        return response.status(404).json({
+                            error: 'Taxa mensal não encontrada'
+                        });
+                    }
+
+                    taxa = parseInt(txa.txaMenIndice);
 
                     auxTotCompras = parseFloat(total[0].totCmp);
                     auxTotTaxa = ((auxTotCompras * taxa) / 100);
@@ -1264,7 +1305,7 @@ module.exports = {
             //let datProcess = new Date();
             let day = '15';
             let year = datProcess.getFullYear();
-            let month = datProcess.getMonth() ;
+            let month = datProcess.getMonth();
             let datVencto = new Date(year, month, day);
 
             console.log('Convenio:', id )
@@ -1286,7 +1327,7 @@ module.exports = {
                 .sum({totCmp: 'parVlrParcela'});
 
             if (!total ) {
-                month = month + 1;
+                //month = month + 1;
                 auxTotCompras = 0.00;
                 auxTotTaxa = 0.00;
                 auxTotLiquido = 0.00;
@@ -1332,10 +1373,32 @@ module.exports = {
                     const cnv = await connection('convenios')
                     .where('cnvId',id)
                     .join('atividades', 'atvId', 'convenios.cnvAtividade')
-                    .select(['cnvId','atividades.atvTaxAdm']);
+                    .select(['cnvId','atividades.atvTaxAdm', 'atividades.atvId']);
     
                     //console.log('Taxa:', cnv[0].atvTaxAdm)
                     let taxa = parseInt(cnv[0].atvTaxAdm);
+                    
+                    //........ Buscar taxa administrativa mensal .........................................
+
+                    let idAtv = cnv[0].atvId;
+                    let mesTxa = month + 1 
+                    const txa = await connection('taxMensal')
+                        .where('txaMenAtvId', idAtv)
+                        .where('txaMenMes', mesTxa)
+                        .where('txaMenAno', year)
+                        .join('atividades', 'atvId', 'taxMensal.txaMenAtvId')
+                       .select(['txaMenId', 'txaMenIndice', 'atividades.atvTaxAdm'])
+                        .first();
+
+                    console.log('mes/ano:', mesTxa, '/', year)
+
+                    if (!txa) {
+                        return response.status(404).json({
+                            error: 'Taxa mensal não encontrada'
+                        });
+                    }
+
+                    taxa = parseInt(txa.txaMenIndice);
 
                     auxTotCompras = parseFloat(total[0].totCmp);
                     auxTotTaxa = ((auxTotCompras * taxa) / 100);
@@ -1380,7 +1443,7 @@ module.exports = {
             }
             vet++;      
         }    
-        return response.status(200).json({ error: 'Verificado valores de venda dos convênios'});
+        return response.status(200).json({ msn: 'Valores de venda dos convênios atualizados!'});
     },
 
     async verifCompras(request, response) {

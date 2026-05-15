@@ -620,12 +620,27 @@ module.exports = {
                 const cnv = await connection('convenios')
                 .join('atividades', 'atvId', 'convenios.cnvAtividade')
                 .where('cnvId',i)
-                .select(['convenios.cnvId','atividades.atvTaxAdm']);
+                .select(['convenios.cnvId','atividades.atvTaxAdm', 'atividades.atvId']);
             
                 if (cnv) {
                     //console.log(cnv);
 
                     let taxa = parseInt(cnv[0].atvTaxAdm)
+
+                    //........ Buscar taxa administrativa mensal .........................................
+
+                    let idAtv = cnv[0].atvId;
+
+                    const txa = await connection('taxMensal')
+                    .where('taxMenAtvId',idAtv)
+                    .where('taxMenMes', month)
+                    .where('taxMenAno', year)
+                    .join('atividades', 'atvId', 'taxMensal.taxMenAtvId')
+                    .select(['taxMenId', 'taxMenIndice', 'atividades.atvTaxAdm']);
+
+                    if (txa) {
+                        let taxa = parseInt(txa[0].taxMenIndice);
+                    }
 
                     if (cnv) {                                
                         const total = await connection('cmpParcelas')

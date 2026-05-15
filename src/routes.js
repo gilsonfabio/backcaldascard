@@ -20,6 +20,7 @@ const DownloadsController = require('./controllers/DownloadsController');
 const BairrosController = require('./controllers/BairrosController');
 const TiposController = require('./controllers/TiposController');
 const OfertasController = require('./controllers/OfertasController');
+const TxaMensalController = require('./controllers/TxaMensalcontroller');
 
 routes.get('/', (request, response) => {
     response.json({
@@ -80,6 +81,13 @@ routes.get('/searchAtiv/:idAtv', AtivController.searchAtiv);
 routes.post('/newatividade', AtivController.create);
 routes.put('/altatividade/:idAtv', AtivController.updateAtiv);
 routes.put('/delAtividade/:idAtv', AtivController.deleteAtiv);
+
+routes.get('/txamensal', TxaMensalController.index);
+routes.post('/newtxamensal', TxaMensalController.create);
+routes.get('/searchTaxa', TxaMensalController.searchTaxa);
+routes.get('/busTxaMensal/:txaMenId', TxaMensalController.busTxaMensal); 
+routes.put('/updTxaMensal/:txaMenId', TxaMensalController.updTxaMensal);            
+routes.post('/geraTaxa', TxaMensalController.geraTaxa);
 
 routes.get('/convenios', ConveniosController.index);                                                     
 routes.get('/searchConv/:idCnv', ConveniosController.searchConv);
