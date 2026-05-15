@@ -20,7 +20,7 @@ const DownloadsController = require('./controllers/DownloadsController');
 const BairrosController = require('./controllers/BairrosController');
 const TiposController = require('./controllers/TiposController');
 const OfertasController = require('./controllers/OfertasController');
-const TxaMensalController = require('./controllers/TxaMensalcontroller');
+const TxaMensalController = require('./controllers/TxaMensalController');
 
 routes.get('/', (request, response) => {
     response.json({
