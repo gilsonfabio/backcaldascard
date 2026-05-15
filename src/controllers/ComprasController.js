@@ -1308,8 +1308,8 @@ module.exports = {
             let month = datProcess.getMonth();
             let datVencto = new Date(year, month, day);
 
-            console.log('Convenio:', id )
-            console.log('Data:', datVencto)
+            //console.log('Convenio:', id )
+            //console.log('Data:', datVencto)
 
             let auxTotCompras = 0.00;
             let auxTotTaxa = 0.00;
@@ -1390,7 +1390,7 @@ module.exports = {
                        .select(['txaMenId', 'txaMenIndice', 'atividades.atvTaxAdm'])
                         .first();
 
-                    console.log('mes/ano:', mesTxa, '/', year)
+                    //console.log('mes/ano:', mesTxa, '/', year)
 
                     if (!txa) {
                         return response.status(404).json({
@@ -1406,10 +1406,10 @@ module.exports = {
                     auxTotSistema = ((auxTotTaxa * 20) / 100);
 
                     month = month + 1;
-                    console.log('Mes:', month);
-                    console.log('Ano:', year);
-                    console.log('Convenio:', id);
-                    console.log('Vlr Total:', auxTotCompras);
+                    //console.log('Mes:', month);
+                    //console.log('Ano:', year);
+                    //console.log('Convenio:', id);
+                    //console.log('Vlr Total:', auxTotCompras);
 
                     const updConv = await connection('totVdaCnv')
                         .where('tcnvId',id)
