@@ -580,6 +580,7 @@ module.exports = {
         }     
     },
     
+    /*
     async pdfExtAdm (request, response) {
         let inicio = request.params.datVencto;
 
@@ -595,7 +596,56 @@ module.exports = {
 
         return response.json(totaliza);
     },
+    */
 
+    async pdfExtAdm(request, response) {
+        try {
+            const { datVencto } = request.params;
+
+            if (!datVencto) {
+                return response.status(400).json({
+                    error: 'Data não informada.'
+                });
+            }
+
+            const [year, month] = datVencto.split('-').map(Number);
+
+            if (!year || !month) {
+                return response.status(400).json({
+                    error: 'Formato de data inválido. Use AAAA-MM.'
+                });
+            }
+
+            const totaliza = await connection('totVdaCnv as tvc')
+                .join('convenios as c', 'c.cnvId', 'tvc.tcnvId')
+                .join('atividades as a', 'a.atvId', 'c.cnvAtividade')
+                .leftJoin('taxMensal as tm', function () {
+                    this.on('tm.txaMenAtvId', '=', 'a.atvId')
+                        .andOn('tm.txaMenMes', '=', connection.raw('?', [month]))
+                        .andOn('tm.txaMenAno', '=', connection.raw('?', [year]));
+                })
+                .where('tvc.tcnvMes', month)
+                .where('tvc.tcnvAno', year)
+                .select([
+                    'tvc.*',
+                    'c.cnvCpfCnpj',
+                    'c.cnvNomFantasia',
+                    'a.atvId',
+                    'tm.txaMenIndice'
+                ]);
+
+            return response.status(200).json(totaliza);
+
+        } catch (error) {
+            console.error(error);
+
+            return response.status(500).json({
+                error: 'Erro ao gerar relatório.',
+                details: error.message
+            });
+        }
+    },
+    
     async totConvenios (request, response) {
         let inicio = request.params.datInicial;
         let datProcess = new Date(inicio);

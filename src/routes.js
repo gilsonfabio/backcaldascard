@@ -54,7 +54,7 @@ routes.get('/searchServ/:cartao', UsersController.searchServ);
 
 routes.post('/signInSrv', UsersController.signInSrv);
 
-routes.get('api/admin', AdminController.index);
+routes.get('/admin', AdminController.index);
 routes.get('/loginAdm/:email/:password', AdminController.signIn);
 routes.post('/newadmin', AdminController.create);
 routes.get('/searchAdmin/:idAdm', AdminController.searchAdmin);
