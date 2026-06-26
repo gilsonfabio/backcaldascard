@@ -2,6 +2,8 @@ const { Console } = require('console');
 const crypto = require('crypto');
 const { addListener } = require('../database/connection');
 const connection = require('../database/connection');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 const jwt = require('jsonwebtoken');
 const {v4:uuidv4} = require ('uuid') ; 
@@ -14,7 +16,25 @@ module.exports = {
     
         return response.json(users);
     },   
-        
+    
+    async totServ(request, response) {
+        try {
+            const [{ total }] = await connection('servidores')
+                .count('* as total');
+
+            return response.json({
+                totalServidores: total
+            });
+        } catch (error) {
+            return response.status(500).json({
+                error: 'Erro ao buscar total de servidores'
+            });
+        }
+    },
+
+    /*
+    // ................................  MD5 .................................................
+
     async signInSrv(request, response) {
         let email = request.body.email;
         let senha = request.body.password;
@@ -44,52 +64,97 @@ module.exports = {
 
         return response.json(user);
     },
+    */
+    //..........................................................................................
 
-
-    /*
     async signInSrv(request, response) {
         let email = request.body.email;
         let senha = request.body.password;
 
-        console.log('Email:', email);
-        console.log('Password:', senha);
+        //console.log('Email:', email);
+        //console.log('Password:', senha);
 
         const usuario = await connection('servidores')
-            .where('usrEmail', email) 
-            .select(`usrId`, `usrNome`, `usrEmail`, `usrPassword`)
+            .where('usrEmail', email)
+            .select(
+                'usrId',
+                'usrNome',
+                'usrEmail',
+                'usrPassword',
+                'usrAtuPass',
+                'usrCartao'
+            )
             .first();
-        
-        if (!usuario) {            
-            return response.status(400).json({ error: 'Não encontrou usuário com este ID'});
-        } 
 
-        console.log(user.usrPassword)
-        let pass = usuario.usrPassword;
-        const match = await bcrypt.compare(senha, pass)
+        if (!usuario) {
+            return response.status(400).json({
+                error: 'Não encontrou usuário'
+            });
+        }
 
-        if(!match) {
-            return response.status(403).send({ auth: false, message: 'User invalid!' });
+        if (usuario.usrAtuPass === null) {
+            let snhCrypt = await bcrypt.hash(senha, saltRounds);
+
+            await connection('servidores')
+                .where('usrId', usuario.usrId)
+                .update({
+                    usrPassword: snhCrypt,
+                    usrAtuPass: new Date(),
+                });
+
+            return response.json({
+                forceRelogin: true,
+                message: "Usuário atualizado! Faça login novamente."
+            });
+        } else {
+            const match = await bcrypt.compare(senha, usuario.usrPassword);
+
+            if (!match) {
+                return response.status(403).json({
+                    auth: false,
+                    message: 'Usuário inválido!'
+                });
+            }
         }
 
         const user = {
-            id: usuario.usrId,
-            name: usuario.usrNome,
-            email: usuario.usrEmail,
-        }
+            usrId: usuario.usrId,
+            usrNome: usuario.usrNome,
+            usrEmail: usuario.usrEmail,
+            usrCartao: usuario.usrCartao,
+        };
 
-        let token = jwt.sign({ id: user.usrId, name: user.usrNome, email: user.usrEmail, nivel: user.usrNivAcesso }, process.env.SECRET_JWT, {
-            expiresIn: '1h'
-        });
-        let refreshToken = jwt.sign({ id: user.usrId, name: user.usrNome, email: user.usrEmail, nivel: user.usrNivAcesso  }, process.env.SECRET_JWT_REFRESH, {
-            expiresIn: '2h'
-        });
-        console.log(user);
-        
-        return response.json(user, token, refreshToken);
+        let token = jwt.sign(
+            {
+                id: user.usrId,
+                name: user.usrNome,
+                email: user.usrEmail
+            },
+            process.env.SECRET_JWT,
+            {
+                expiresIn: '1h'
+            }
+        );
 
+        let refreshToken = jwt.sign(
+            {
+                id: user.usrId,
+                name: user.usrNome,
+                email: user.usrEmail
+            },
+            process.env.SECRET_JWT_REFRESH,
+            {
+                expiresIn: '2h'
+            }
+        );
+
+        return response.json({
+            user,
+            token,
+            refreshToken            
+        });
     },
-    */
-
+    
     async dadosUser(request, response) {
         let id = request.params.id;
 
@@ -395,6 +460,7 @@ module.exports = {
         return response.json(user);
     },
 
+    /*
     async loginUsr(request, response) {
         let id = request.params.cartao;
         let senha = request.params.password;
@@ -417,6 +483,32 @@ module.exports = {
         //console.log(user);
 
         return response.json(user);
+    },
+    */
+    
+    async loginUsr(request, response) {
+        let id = request.body.idCrt;
+        let senha = request.body.password;
+
+        const user = await connection('servidores')
+            .where('usrCartao', id) 
+            .join('tipcontratos', 'idTip', 'servidores.usrTipContrato') 
+            .select(['servidores.*','tipcontratos.idTip','tipcontratos.tipDescricao','tipcontratos.tipParcelas'])
+            .first();
+        
+        if (!user) {            
+            return response.status(400).json({ error: 'Não encontrou administrador com este ID'});
+        } 
+
+        let pass = user.usrPassword;
+        const match = await bcrypt.compare(senha, pass)
+
+        if(!match) {
+            return response.status(403).send({ auth: false, message: 'User invalid!' });
+        }
+
+        return response.json(user);
+
     },
 
     async liberaUsr(request, response) {
@@ -485,7 +577,7 @@ module.exports = {
         var datAdmissao = new Date(usrAdmissao);
         var datNasConjuge = new Date(usrNasConjuge);
         var status = 'A'; 
-        var senha = crypto.createHash('md5').update(usrPassword).digest('hex');
+        let snhCrypt = await bcrypt.hash(usrPassword, saltRounds);
         const [usrId] = await connection('servidores').insert({
             usrNome,
             usrEmail,
@@ -510,7 +602,7 @@ module.exports = {
             usrSalLiquido,
             usrSalBase,
             usrSalBruto,
-            usrPassword: senha,
+            usrPassword: snhCrypt,
             usrTipContrato,
             usrFonTrabalho,
             usrCargo,
@@ -554,6 +646,8 @@ module.exports = {
         return response.json(user);
     },    
 
+    /*
+    //***************************************** Antigo ****************************************************** 
     async updPassword(request, response) {
         let email = request.params.emailUsuario;         
         const { newPassword, codSeguranca } = request.body;
@@ -572,7 +666,28 @@ module.exports = {
            
         return response.status(204).send();
     },
-      
+    //*********************************************************************************************************
+    */
+    
+    async updPassword(request, response) {
+        let email = request.params.emailUsuario;         
+        const { newPassword, codSeguranca } = request.body;
+        
+        let datUpdate = new Date();
+        let seguranca = '';
+        let snhCrypt = await bcrypt.hash(newPassword, saltRounds);
+
+        await connection('servidores')
+        .where('usrEmail', email)
+        .where('usrSeguranca', codSeguranca)   
+        .update({
+            usrPassword: snhCrypt,
+            usrCodSeguranca: seguranca,           
+        });
+           
+        return response.status(204).send();
+    },
+
     async updServidor(request, response) {
         let id = request.params.idSrv;         
         const { usrNome,
@@ -974,7 +1089,7 @@ module.exports = {
                 }
             }
     
-            console.log(`Dia: ${day}, Mês: ${month}, Ano: ${year}, ID: ${id}`);
+            //console.log(`Dia: ${day}, Mês: ${month}, Ano: ${year}, ID: ${id}`);
     
             const user = await connection('usrSaldo')
                 .where('usrServ', id)

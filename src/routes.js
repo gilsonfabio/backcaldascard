@@ -35,7 +35,11 @@ routes.put('/updPassword/:emailUsuario', UsersController.updPassword);
 routes.get('/verUsuario/:email', UsersController.searchEmail);
 routes.get('/findUser/:cartao', UsersController.findUser);
 routes.get('/busServ/:cartao/:password', UsersController.busServ);
-routes.get('/loginUsr/:cartao/:password', UsersController.loginUsr);
+routes.get('/totServ', UsersController.totServ);
+
+//routes.get('/loginUsr/:cartao/:password', UsersController.loginUsr);
+routes.post('/loginUsr', UsersController.loginUsr);
+
 routes.get('/verifUser/:cartao', UsersController.verifUser);
 routes.put('/altservidor/:idSrv', UsersController.updServidor);
 routes.get('/classUser/:search', UsersController.classUser);
@@ -95,11 +99,17 @@ routes.get('/busConv/:cnpjCnv', ConveniosController.busConv);
 routes.post('/newconvenio', ConveniosController.create);
 routes.put('/altconvenio/:idCnv', ConveniosController.updateConv);
 routes.put('/delconvenio/:idCnv', ConveniosController.deleteConv);
-routes.get('/loginCnv/:email/:password', ConveniosController.signIn);
+
+routes.get('/loginCnv/:email/:password', ConveniosController.signInCnv);
+
 routes.put('/updPassCnv/:emailUsuario', ConveniosController.updPassCnv);
 routes.put('/updSnhCnvCanc/:emailUsuario', ConveniosController.updSnhCnvCanc);
 routes.get('/classCnv/:search', ConveniosController.classCnv);
-routes.get('/signInCnc/:email/:password', ConveniosController.signInCnc);
+routes.get('/totConv', ConveniosController.totConv);
+
+routes.post('/signInCnv', ConveniosController.signIn);
+
+routes.post('/signInAdm', AdminController.signInAdm);
 
 routes.get('/maxParcelas/:cnvId', ConveniosController.maxParcelas);
 

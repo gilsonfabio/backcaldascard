@@ -43,6 +43,7 @@ module.exports = {
         
         const compras = await connection('compras')
         .where('cmpServidor', id)
+        .where('cmpStatus', status)
         .join('servidores', 'usrId', 'compras.cmpServidor')
         .join('convenios', 'cnvId', 'compras.cmpConvenio')
         .limit(50)
@@ -92,7 +93,7 @@ module.exports = {
             return response.status(402).json({ error: 'Não encontrou compras nesse periodo'});
         }   
 
-        console.log('Total de registros...',compras.length);
+        //console.log('Total de registros...',compras.length);
         return response.json({compras});
 
     },
@@ -510,12 +511,12 @@ module.exports = {
         let vlrLimite = ((serv[0].usrSalLiquido * 30) / 100);
         let nro = 1;
         
-        console.log('Antes:',nroCartao)
-        console.log('Antes',vlrLimite)
+        //console.log('Antes:',nroCartao)
+        //console.log('Antes',vlrLimite)
         
         while (nro <= 25){
 
-            console.log('inicio...')
+            //console.log('inicio...')
             
             const total = await connection('cmpParcelas')
                 .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
@@ -534,7 +535,7 @@ module.exports = {
 
             let data = JSON.stringify(total[0].totCmp);
 
-            console.log(data);
+            //console.log(data);
 
             let totCompras = parseFloat(data);
             if (isNaN(totCompras)) {
@@ -583,8 +584,8 @@ module.exports = {
             let month = datProcess.getMonth() ;
             let datVencto = new Date(year, month, day);
 
-            console.log('Convenio:', id )
-            console.log('Data:', datVencto)
+            //console.log('Convenio:', id )
+            //console.log('Data:', datVencto)
 
             let auxTotCompras = 0.00;
             let auxTotTaxa = 0.00;
@@ -665,7 +666,7 @@ module.exports = {
                        .select(['txaMenId', 'txaMenIndice', 'atividades.atvTaxAdm'])
                         .first();
 
-                    console.log('mes/ano:', mesTxa, '/', year)
+                    //console.log('mes/ano:', mesTxa, '/', year)
 
                     if (!txa) {
                         return response.status(404).json({
@@ -681,10 +682,10 @@ module.exports = {
                     auxTotSistema = ((auxTotTaxa * 20) / 100);
 
                     month = month + 1;
-                    console.log('Mes:', month);
-                    console.log('Ano:', year);
-                    console.log('Convenio:', id);
-                    console.log('Vlr Total:', auxTotCompras);
+                    //console.log('Mes:', month);
+                    //console.log('Ano:', year);
+                    //console.log('Convenio:', id);
+                    //console.log('Vlr Total:', auxTotCompras);
 
                     const updConv = await connection('totVdaCnv')
                         .where('tcnvId',id)
@@ -793,7 +794,7 @@ module.exports = {
         let year = datProcess.getFullYear();
         let month = datProcess.getMonth() ;
         let datVencto = new Date(year, month, day);
-        console.log('Data selecionada:', datVencto)
+        //console.log('Data selecionada:', datVencto)
         let err = 0;
         let vlrZerado = 0.00;
         month = month + 1;
@@ -906,11 +907,11 @@ module.exports = {
 
                 let staParcela = 'A';
 
-                console.log(compra[0].cmpId)
-                console.log(compra[0].cmpQtdParcela)
-                console.log(vlrParcela)
-                console.log(vlrResult)
-                console.log(vlrResto)
+                //console.log(compra[0].cmpId)
+                //console.log(compra[0].cmpQtdParcela)
+                //console.log(vlrParcela)
+                //console.log(vlrResult)
+                //console.log(vlrResto)
 
                 let parc = 1;
                 while (parc <= compra[0].cmpQtdParcela) {

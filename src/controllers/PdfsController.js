@@ -73,7 +73,7 @@ module.exports = {
         
         //console.log(inicio);
         //console.log(final);
-        //console.log(servidor);
+        //console.log(servidor); 
 
         const datNow = moment().format('DD-MM-YYYY');
         const horNow = moment().format('hh:mm:ss');  
@@ -153,7 +153,7 @@ module.exports = {
     async pdfEmiCmpSrv (request, response) {
         let inicio = request.params.datInicial;
         let final = request.params.datFinal;
-        let convenio = request.params.cnvId;
+        let servidor = request.params.srvId;
         let status = 'A';
                                
         const datNow = moment().format('DD-MM-YYYY');
@@ -170,7 +170,7 @@ module.exports = {
             .where('cmpEmissao','>=', datIni)
             .where('cmpEmissao','<=', datFin)
             .where('cmpStatus', status)
-            .where('cmpConvenio', convenio)
+            .where('cmpServidor', servidor)
             .join('servidores', 'usrId', 'compras.cmpServidor')
             .join('convenios', 'cnvId', 'compras.cmpConvenio')
             .select(['compras.*', 'servidores.usrNome', 'convenios.cnvNomFantasia']);
@@ -788,4 +788,7 @@ module.exports = {
     
         return response.json(compras);
     },
+
+
+
 };

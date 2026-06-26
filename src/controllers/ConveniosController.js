@@ -1,5 +1,7 @@
 const crypto = require('crypto');
 const connection = require('../database/connection');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 module.exports = {   
     async index (request, response) {
@@ -10,6 +12,21 @@ module.exports = {
     
         return response.json(convenios);
     },   
+
+    async totConv(request, response) {
+        try {
+            const [{ total }] = await connection('convenios')
+                .count('* as total');
+
+            return response.json({
+                totalConvenios: total
+            });
+        } catch (error) {
+            return response.status(500).json({
+                error: 'Erro ao buscar total de convênios'
+            });
+        }
+    },
     
     async classCnv (request, response) {
         let nome = request.params.search;
@@ -21,7 +38,7 @@ module.exports = {
         return response.json(convenios);
     }, 
 
-    async signIn(request, response) {
+    async signInCnv(request, response) {
         let emailCnv = request.params.email;
         let senha = request.params.password;
 
@@ -40,6 +57,95 @@ module.exports = {
 
         return response.json(conv);
     },
+
+    //..........................................................................................................................
+
+    async signIn(request, response) {
+        try {
+            const { email, password } = request.body;
+
+            // Validação básica
+            if (!email || !password) {
+                return response.status(400).json({
+                    success: false,
+                    message: "Email e senha são obrigatórios."
+                });
+            }
+
+            console.log("Email:", email);
+
+            // Busca usuário
+            const cnv = await connection("convenios")
+                .where("cnvEmail", email)
+                .select(
+                    "cnvId",
+                    "cnvNomFantasia",
+                    "cnvEmail",
+                    "cnvPassword",
+                    "cnvAtuPass"
+                )
+                .first();
+
+            // Usuário não encontrado
+            if (!cnv) {
+                return response.status(401).json({
+                    success: false,
+                    message: "Usuário não encontrado."
+                });
+            }
+
+            // Primeiro login / migração de senha
+            if (!cnv.cnvAtuPass) {
+                const senhaCriptografada = await bcrypt.hash(password, saltRounds);
+
+                await connection("convenios")
+                    .where("cnvId", cnv.cnvId)
+                    .update({
+                        cnvPassword: senhaCriptografada,
+                        cnvAtuPass: new Date(),
+                    });
+
+                return response.status(200).json({
+                    success: true,
+                    forceRelogin: true,
+                    message: "Senha atualizada. Faça login novamente."
+                });
+            }
+
+            // Verifica senha
+            const senhaValida = await bcrypt.compare(
+                password,
+                cnv.cnvPassword
+            );
+
+            if (!senhaValida) {
+                return response.status(403).json({
+                    success: false,
+                    message: "Senha inválida."
+                });
+            }
+
+            // Dados do usuário
+            const usuario = {
+                cnvId: cnv.cnvId,
+                cnvNomFantasia: cnv.cnvNomFantasia,
+                cnvEmail: cnv.cnvEmail,
+            };
+
+            return response.status(200).json({
+                success: true,
+                user: usuario
+            });
+        } catch (error) {
+            console.error("Erro no login:", error);
+            return response.status(500).json({
+                success: false,
+                message: "Erro interno do servidor."
+            });
+        }
+    },
+
+    //............................................................................................................................
 
     async signInCnc(request, response) {
         let emailCnv = request.params.email;
