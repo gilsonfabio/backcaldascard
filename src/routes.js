@@ -23,7 +23,7 @@ const OfertasController = require('./controllers/OfertasController');
 
 routes.get('/', (request, response) => {
     response.json({
-        message: 'Bem-vindo ao servidor Sindicaldas!',
+        message: 'Bem-vindo ao servidor Sindicaldas! Versão: 2.0.1',
     });
 });
 routes.get('/users', UsersController.index);
