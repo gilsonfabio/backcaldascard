@@ -605,7 +605,7 @@ module.exports = {
             .where('tcnvAno', year)
             .join('convenios', 'cnvId', 'totVdaCnv.tcnvId')
             .select(['totVdaCnv.*', 'convenios.cnvCpfCnpj', 'convenios.cnvNomFantasia'])
-            .orderBy('convenios.cnvId');
+            .orderBy('convenios.tcnvId');
 
         return response.json(totaliza);
     },
