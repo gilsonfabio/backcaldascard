@@ -91,36 +91,80 @@ module.exports = {
         return response.json(vctcompras);
     }, 
 
-    async pdfVctCmpCnv (request, response) {
-        let inicio = request.params.datInicial;
-        let final = request.params.datFinal;
-        let convenio = request.params.cnvId;
-        let status = 'A';
+    async pdfVctCmpCnv(request, response) {
+        try {
+            const { datInicial, datFinal, cnvId } = request.params;
 
-        let datIni = inicio.split('/').reverse().join('-');
-        let datFin = final.split('/').reverse().join('-');
-        
-        //console.log(inicio);
-        //console.log(final);
-        //.log(convenio);
+            // As datas recebidas devem estar no formato YYYY-MM-DD.
+            const inicio = moment(datInicial, 'YYYY-MM-DD', true);
+            const final = moment(datFinal, 'YYYY-MM-DD', true);
 
-        const datNow = moment().format('DD-MM-YYYY');
-        const horNow = moment().format('hh:mm:ss');  
-                
-        const vctcompras = await connection('cmpParcelas')
-            .where('parVctParcela','>=', datIni)
-            .where('parVctParcela','<=', datFin)
-            .where('parStaParcela', status)
-            .where('convenios.cnvId', convenio)
-            .join('compras', 'cmpId', 'cmpParcelas.parIdCompra')
-            .join('servidores', 'usrId', 'compras.cmpServidor')
-            .join('convenios', 'cnvId', 'compras.cmpConvenio')
-            .select(['cmpParcelas.*', 'compras.cmpId', 'compras.cmpQtdParcela', 'compras.cmpEmissao', 'compras.cmpServidor', 'compras.cmpConvenio', 'compras.cmpVlrCompra', 'servidores.usrNome', 'convenios.cnvNomFantasia']);
+            if (
+                !inicio.isValid() ||
+                !final.isValid() ||
+                final.isBefore(inicio, 'day')
+            ) {
+                return response.status(400).json({
+                    erro: 'Período inválido. Informe as datas no formato YYYY-MM-DD.'
+                });
+            }
 
-            console.log(vctcompras)
+            const datIni = inicio.format('YYYY-MM-DD');
+            const datFin = final.clone().add(1, 'day').format('YYYY-MM-DD');
 
-        return response.json(vctcompras);
-    }, 
+            const status = 'A';
+
+            console.log('Parâmetros da consulta:', {
+                datIni,
+                datFin,
+                cnvId,
+                status
+            });
+
+            const vctcompras = await connection('cmpParcelas')
+                .where('cmpParcelas.parVctParcela', '>=', datIni)
+                .where('cmpParcelas.parVctParcela', '<', datFin)
+                .where('cmpParcelas.parStaParcela', status)
+                .where('convenios.cnvId', cnvId)
+                .join(
+                    'compras',
+                    'compras.cmpId',
+                    'cmpParcelas.parIdCompra'
+                )
+                .join(
+                    'servidores',
+                    'servidores.usrId',
+                    'compras.cmpServidor'
+                )
+                .join(
+                    'convenios',
+                    'convenios.cnvId',
+                    'compras.cmpConvenio'
+                )
+                .select([
+                    'cmpParcelas.*',
+                    'compras.cmpId',
+                    'compras.cmpQtdParcela',
+                    'compras.cmpEmissao',
+                    'compras.cmpServidor',
+                    'compras.cmpConvenio',
+                    'compras.cmpVlrCompra',
+                    'servidores.usrNome',
+                    'convenios.cnvNomFantasia'
+                ]);
+
+            console.log('Quantidade de registros encontrados:', vctcompras.length);
+
+            return response.json(vctcompras);
+
+        } catch (error) {
+            console.error('Erro em pdfVctCmpCnv:', error);
+
+            return response.status(500).json({
+                erro: 'Erro ao consultar compras por vencimento.'
+            });
+        }
+    },
 
     async pdfEmiCmpCnv (request, response) {
         let inicio = request.params.datInicial;
