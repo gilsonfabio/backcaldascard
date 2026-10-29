@@ -91,36 +91,53 @@ module.exports = {
         return response.json(vctcompras);
     }, 
 
+
     async pdfVctCmpCnv(request, response) {
         try {
             const { datInicial, datFinal, cnvId } = request.params;
 
-            // As datas recebidas devem estar no formato YYYY-MM-DD.
-            const inicio = moment(datInicial, 'YYYY-MM-DD', true);
-            const final = moment(datFinal, 'YYYY-MM-DD', true);
+            // Aceita diferentes formatos de data enviados pelo frontend.
+            const formatos = [
+                'YYYY-MM-DD',
+                'DD-MM-YYYY',
+                'DD/MM/YYYY'
+            ];
 
+            const inicio = moment(datInicial, formatos, true);
+            const final = moment(datFinal, formatos, true);
+
+            // Validação das datas recebidas.
             if (
                 !inicio.isValid() ||
                 !final.isValid() ||
                 final.isBefore(inicio, 'day')
             ) {
                 return response.status(400).json({
-                    erro: 'Período inválido. Informe as datas no formato YYYY-MM-DD.'
+                    erro: 'Período inválido.',
+                    mensagem: 'Informe as datas nos formatos DD-MM-YYYY, DD/MM/YYYY ou YYYY-MM-DD.',
+                    datInicial,
+                    datFinal
                 });
             }
 
+            // Converte as datas para o formato aceito pelo MySQL.
             const datIni = inicio.format('YYYY-MM-DD');
+
+            // Primeiro dia após a data final, para incluir todo o último dia.
             const datFin = final.clone().add(1, 'day').format('YYYY-MM-DD');
 
             const status = 'A';
 
             console.log('Parâmetros da consulta:', {
+                dataInicialRecebida: datInicial,
+                dataFinalRecebida: datFinal,
                 datIni,
                 datFin,
                 cnvId,
                 status
             });
 
+            // Consulta das parcelas por período e convênio.
             const vctcompras = await connection('cmpParcelas')
                 .where('cmpParcelas.parVctParcela', '>=', datIni)
                 .where('cmpParcelas.parVctParcela', '<', datFin)
@@ -151,9 +168,13 @@ module.exports = {
                     'compras.cmpVlrCompra',
                     'servidores.usrNome',
                     'convenios.cnvNomFantasia'
-                ]);
+                ])
+                .orderBy('cmpParcelas.parVctParcela', 'asc');
 
-            console.log('Quantidade de registros encontrados:', vctcompras.length);
+            console.log(
+                'Quantidade de registros encontrados:',
+                vctcompras.length
+            );
 
             return response.json(vctcompras);
 
