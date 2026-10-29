@@ -24,7 +24,7 @@ const TxaMensalController = require('./controllers/TxaMensalController');
 
 routes.get('/', (request, response) => {
     response.json({
-        message: 'Bem-vindo ao servidor Sindicaldas!',
+        message: 'Bem-vindo ao servidor Sindicaldas ver.2.0!',
     });
 });
 routes.get('/users', UsersController.index);
@@ -100,7 +100,7 @@ routes.post('/newconvenio', ConveniosController.create);
 routes.put('/altconvenio/:idCnv', ConveniosController.updateConv);
 routes.put('/delconvenio/:idCnv', ConveniosController.deleteConv);
 
-routes.get('/loginCnv/:email/:password', ConveniosController.signInCnv);
+routes.post('/loginCnv', ConveniosController.signInCnv);
 
 routes.put('/updPassCnv/:emailUsuario', ConveniosController.updPassCnv);
 routes.put('/updSnhCnvCanc/:emailUsuario', ConveniosController.updSnhCnvCanc);

@@ -38,6 +38,7 @@ module.exports = {
         return response.json(convenios);
     }, 
 
+    /*
     async signInCnv(request, response) {
         let emailCnv = request.params.email;
         let senha = request.params.password;
@@ -56,6 +57,112 @@ module.exports = {
         //console.log(conv.cnvNomFantasia);
 
         return response.json(conv);
+    },
+    */
+
+    // Dentro do seu controller:
+    async signInCnv(request, response) {
+        try {
+            const emailCnv = request.body.email;
+            const senha = request.body.password;
+
+            if (!emailCnv || !senha) {
+                return response.status(400).json({
+                    error: 'Informe o e-mail e a senha.'
+                });
+            }
+
+            // Busca o convênio pelo e-mail.
+            const conv = await connection('convenios')
+                .where('cnvEmail', emailCnv)
+                .select(
+                    'cnvId',
+                    'cnvNomFantasia',
+                    'cnvPassword',
+                    'cnvAtuPass'
+                )
+                .first();
+
+            if (!conv) {
+                return response.status(401).json({
+                    error: 'E-mail ou senha inválidos.'
+                });
+            }
+
+            let senhaValida = false;
+
+            // PRIMEIRO LOGIN: senha legada em MD5.
+            if (conv.cnvAtuPass === null) {
+                const senhaMD5 = crypto
+                    .createHash('md5')
+                    .update(senha)
+                    .digest('hex');
+
+                // Compara o MD5 com a senha armazenada.
+                if (senhaMD5 === conv.cnvPassword) {
+                    senhaValida = true;
+
+                    // Gera o novo hash bcrypt com custo 12.
+                    const novoHash = await bcrypt.hash(senha, 12);
+
+                    // Atualiza somente se a conta ainda não foi migrada.
+                    const atualizados = await connection('convenios')
+                        .where('cnvId', conv.cnvId)
+                        .whereNull('cnvAtuPass')
+                        .update({
+                            cnvPassword: novoHash,
+                            cnvAtuPass: connection.fn.now()
+                        });
+
+                    if (atualizados === 0) {
+                        // Outra requisição pode ter migrado a senha
+                        // simultaneamente. Confere o hash atualizado.
+                        const convAtualizado = await connection('convenios')
+                            .where('cnvId', conv.cnvId)
+                            .select('cnvPassword', 'cnvAtuPass')
+                            .first();
+
+                        if (
+                            !convAtualizado ||
+                            convAtualizado.cnvAtuPass === null ||
+                            !(await bcrypt.compare(
+                                senha,
+                                convAtualizado.cnvPassword
+                            ))
+                        ) {
+                            return response.status(401).json({
+                                error: 'E-mail ou senha inválidos.'
+                            });
+                        }
+                    }
+                }
+            } else {
+                // PRÓXIMOS LOGINS: validação exclusivamente com bcrypt.
+                senhaValida = await bcrypt.compare(
+                    senha,
+                    conv.cnvPassword
+                );
+            }
+
+            if (!senhaValida) {
+                return response.status(401).json({
+                    error: 'E-mail ou senha inválidos.'
+                });
+            }
+
+            // Retorna apenas os dados necessários ao frontend.
+            return response.json({
+                cnvId: conv.cnvId,
+                cnvNomFantasia: conv.cnvNomFantasia
+            });
+
+        } catch (error) {
+            console.error('Erro no login do convênio:', error);
+
+            return response.status(500).json({
+                error: 'Erro interno ao realizar o login.'
+            });
+        }
     },
 
     //..........................................................................................................................

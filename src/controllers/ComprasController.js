@@ -1300,7 +1300,7 @@ module.exports = {
     async aceCmpCnv(request, response) {
         let datProcess = new Date(request.body.datVencto);
         let vet = 1;
-        while (vet <= 50) { 
+        while (vet <= 60) { 
             let id = vet;
             let status = 'A';
             //let datProcess = new Date();

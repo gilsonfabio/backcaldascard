@@ -1,45 +1,50 @@
-// Update with your config settings.
-module.exports = {
+require('dotenv').config();
 
+module.exports = {
   development: {
-    client: '',
+    client: 'mysql',
     connection: {
-      host : 'sindicaldas.mysql.dbaas.com.br',
-      database: 'sindicaldas',
-      user: 'sindicaldas',
-      password: 'Admin@3112'
+      host: process.env.DATABASE_HOST || '127.0.0.1',
+      port: Number(process.env.DATABASE_PORT || 3306),
+      database: process.env.DATABASE_NAME,
+      user: process.env.DATABASE_USER,
+      password: process.env.DATABASE_PASSWORD
     },
     migrations: {
-      directory: ''
+      directory: './src/database/migrations'
     },
-    useNullAsDefault: true,
+    useNullAsDefault: true
   },
 
   staging: {
-    client: '',
+    client: 'mysql',
     connection: {
-      database: '',
-      user:     '',
-      password: ''
+      host: process.env.DATABASE_HOST,
+      port: Number(process.env.DATABASE_PORT || 3306),
+      database: process.env.DATABASE_NAME,
+      user: process.env.DATABASE_USER,
+      password: process.env.DATABASE_PASSWORD
     },
     pool: {
       min: 2,
       max: 10
     },
     migrations: {
-      tableName: ''
-    }
+      tableName: 'knex_migrations',
+      directory: './src/database/migrations'
+    },
+    useNullAsDefault: true
   },
 
   production: {
     client: 'mysql',
     connection: {
-      host : 'sindicaldas.mysql.dbaas.com.br',
-      database: 'sindicaldas',
-      user: 'sindicaldas',
-      password: 'Admin@3112'
+      host: process.env.DATABASE_HOST,
+      port: Number(process.env.DATABASE_PORT || 3306),
+      database: process.env.DATABASE_NAME,
+      user: process.env.DATABASE_USER,
+      password: process.env.DATABASE_PASSWORD
     },
-    
     pool: {
       min: 2,
       max: 10
@@ -47,7 +52,6 @@ module.exports = {
     migrations: {
       directory: './src/database/migrations'
     },
-    useNullAsDefault: true,
-  },
-
+    useNullAsDefault: true
+  }
 };

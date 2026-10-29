@@ -131,7 +131,7 @@ module.exports = {
         let err = 0; 
         let vlrZerado = 0.00;
         let vet = 1;
-        while (vet <= 40) { 
+        while (vet <= 60) { 
             const conv = await connection('convenios')
             .where('cnvId', vet)
             .join('atividades', 'atvId', 'convenios.cnvAtividade')

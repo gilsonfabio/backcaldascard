@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const { addListener } = require('../database/connection');
 const connection = require('../database/connection');
 const bcrypt = require('bcrypt');
-const saltRounds = 10;
+const saltRounds = 12;
 
 const jwt = require('jsonwebtoken');
 const {v4:uuidv4} = require ('uuid') ; 
@@ -19,15 +19,17 @@ module.exports = {
     
     async totServ(request, response) {
         try {
-            const [{ total }] = await connection('servidores')
+            const resultado = await connection('servidores')
                 .count('* as total');
 
-            return response.json({
-                totalServidores: total
+            return response.status(200).json({
+                totalServidores: Number(resultado[0].total)
             });
+
         } catch (error) {
             return response.status(500).json({
-                error: 'Erro ao buscar total de servidores'
+                message: 'Erro ao consultar o total de servidores.',
+                error: error.message
             });
         }
     },
@@ -68,92 +70,127 @@ module.exports = {
     //..........................................................................................
 
     async signInSrv(request, response) {
-        let email = request.body.email;
-        let senha = request.body.password;
+        try {
+            const email = request.body.email;
+            const senha = request.body.password;
 
-        //console.log('Email:', email);
-        //console.log('Password:', senha);
+            const usuario = await connection('servidores')
+                .where('usrEmail', email)
+                .select(
+                    'usrId',
+                    'usrNome',
+                    'usrEmail',
+                    'usrPassword',
+                    'usrAtuPass',
+                    'usrCartao'
+                )
+                .first();
 
-        const usuario = await connection('servidores')
-            .where('usrEmail', email)
-            .select(
-                'usrId',
-                'usrNome',
-                'usrEmail',
-                'usrPassword',
-                'usrAtuPass',
-                'usrCartao'
-            )
-            .first();
-
-        if (!usuario) {
-            return response.status(400).json({
-                error: 'Não encontrou usuário'
-            });
-        }
-
-        if (usuario.usrAtuPass === null) {
-            let snhCrypt = await bcrypt.hash(senha, saltRounds);
-
-            await connection('servidores')
-                .where('usrId', usuario.usrId)
-                .update({
-                    usrPassword: snhCrypt,
-                    usrAtuPass: new Date(),
+            if (!usuario) {
+                return response.status(400).json({
+                    error: 'Não encontrou usuário'
                 });
+            }
+
+            // Caso 1: usuário ainda não migrou a senha para bcrypt
+            if (usuario.usrAtuPass === null) {
+
+                // Calcula o MD5 da senha informada
+                const senhaMD5 = require('crypto')
+                    .createHash('md5')
+                    .update(senha)
+                    .digest('hex');
+
+                // Confere se a senha informada corresponde ao MD5 armazenado
+                if (senhaMD5 !== usuario.usrPassword) {
+                    return response.status(403).json({
+                        auth: false,
+                        message: 'Usuário inválido!'
+                    });
+                }
+
+                // Senha MD5 validada: migra para bcrypt
+                const snhCrypt = await bcrypt.hash(senha, saltRounds);
+
+                await connection('servidores')
+                    .where('usrId', usuario.usrId)
+                    .update({
+                        usrPassword: snhCrypt,
+                        usrAtuPass: new Date()
+                    });
+
+                // Solicita novo login após a migração
+                return response.json({
+                    forceRelogin: true,
+                    message: 'Usuário atualizado! Faça login novamente.'
+                });
+
+            } else {
+
+                // Caso 2: usuário já migrou a senha para bcrypt
+                const match = await bcrypt.compare(
+                    senha,
+                    usuario.usrPassword
+                );
+
+                if (!match) {
+                    return response.status(403).json({
+                        auth: false,
+                        message: 'Usuário inválido!'
+                    });
+                }
+            }
+
+            // Dados do usuário autenticado
+            const user = {
+                usrId: usuario.usrId,
+                usrNome: usuario.usrNome,
+                usrEmail: usuario.usrEmail,
+                usrCartao: usuario.usrCartao
+            };
+
+            // Gera o token de acesso
+            const token = jwt.sign(
+                {
+                    id: user.usrId,
+                    name: user.usrNome,
+                    email: user.usrEmail
+                },
+                process.env.SECRET_JWT,
+                {
+                    expiresIn: '1h'
+                }
+            );
+
+            // Gera o refresh token
+            const refreshToken = jwt.sign(
+                {
+                    id: user.usrId,
+                    name: user.usrNome,
+                    email: user.usrEmail
+                },
+                process.env.SECRET_JWT_REFRESH,
+                {
+                    expiresIn: '2h'
+                }
+            );
 
             return response.json({
-                forceRelogin: true,
-                message: "Usuário atualizado! Faça login novamente."
+                user,
+                token,
+                refreshToken
             });
-        } else {
-            const match = await bcrypt.compare(senha, usuario.usrPassword);
 
-            if (!match) {
-                return response.status(403).json({
-                    auth: false,
-                    message: 'Usuário inválido!'
-                });
-            }
+        } catch (error) {
+            console.error('Erro no login do servidor:', error);
+
+            return response.status(500).json({
+                error: 'Erro interno ao realizar login.'
+            });
         }
-
-        const user = {
-            usrId: usuario.usrId,
-            usrNome: usuario.usrNome,
-            usrEmail: usuario.usrEmail,
-            usrCartao: usuario.usrCartao,
-        };
-
-        let token = jwt.sign(
-            {
-                id: user.usrId,
-                name: user.usrNome,
-                email: user.usrEmail
-            },
-            process.env.SECRET_JWT,
-            {
-                expiresIn: '1h'
-            }
-        );
-
-        let refreshToken = jwt.sign(
-            {
-                id: user.usrId,
-                name: user.usrNome,
-                email: user.usrEmail
-            },
-            process.env.SECRET_JWT_REFRESH,
-            {
-                expiresIn: '2h'
-            }
-        );
-
-        return response.json({
-            user,
-            token,
-            refreshToken            
-        });
     },
+
+    //...........................................................................................................
     
     async dadosUser(request, response) {
         let id = request.params.id;
