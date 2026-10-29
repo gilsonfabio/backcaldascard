@@ -30,55 +30,121 @@ module.exports = {
 
         return response.json(admin);
     },
-
+     
     async signInAdm(request, response) {
-        let email = request.body.email;
-        let senha = request.body.password;
+        try {
+            const email = request.body.email;
+            const senha = request.body.password;
 
-        const admin = await connection('administrator')
-            .where('admEmail', email)
-            .select('admId', 'admNome', 'admNivAcesso', 'admSenha', 'admAtuPass')
-            .first();
-          
-        if (!admin) {
-            return response.status(400).json({ error: 'Não encontrou usuario com este ID'});
-        } 
-         
-        if (admin.admAtuPass === null) {
-            let idAdm = admin.admId;
-            let snhCrypt = await bcrypt.hash(senha, saltRounds);
-            let datAtual = new Date();
-            await connection('administrator')
-            .where('admId', idAdm)   
-            .update({
-                admSenha: snhCrypt, 
-                admAtuPass: datAtual, 
+            const admin = await connection('administrator')
+                .where('admEmail', email)
+                .select(
+                    'admId',
+                    'admNome',
+                    'admEmail',
+                    'admNivAcesso',
+                    'admSenha',
+                    'admAtuPass'
+                )
+                .first();
+
+            if (!admin) {
+                return response.status(400).json({
+                    error: 'Não encontrou usuário com este e-mail.'
+                });
+            }
+
+            // Caso 1: senha ainda não foi migrada para bcrypt
+            if (admin.admAtuPass === null) {
+
+                // Calcula o MD5 da senha informada
+                const senhaMD5 = require('crypto')
+                    .createHash('md5')
+                    .update(senha)
+                    .digest('hex');
+
+                // Confere a senha antiga armazenada
+                if (senhaMD5 !== admin.admSenha) {
+                    return response.status(403).json({
+                        auth: false,
+                        message: 'Usuário inválido!'
+                    });
+                }
+
+                // Senha MD5 validada: migra para bcrypt
+                const snhCrypt = await bcrypt.hash(senha, saltRounds);
+
+                await connection('administrator')
+                    .where('admId', admin.admId)
+                    .update({
+                        admSenha: snhCrypt,
+                        admAtuPass: new Date()
+                    });
+
+                // Solicita novo login após a migração
+                return response.json({
+                    forceRelogin: true,
+                    message: 'Usuário atualizado! Faça login novamente.'
+                });
+
+            } else {
+
+                // Caso 2: senha já foi migrada para bcrypt
+                const match = await bcrypt.compare(
+                    senha,
+                    admin.admSenha
+                );
+
+                if (!match) {
+                    return response.status(403).json({
+                        auth: false,
+                        message: 'Usuário inválido!'
+                    });
+                }
+            }
+
+            // Credenciais válidas: gera os tokens
+            const token = jwt.sign(
+                {
+                    id: admin.admId,
+                    name: admin.admNome,
+                    email: admin.admEmail
+                },
+                process.env.SECRET_JWT,
+                {
+                    expiresIn: '1h'
+                }
+            );
+
+            const refreshToken = jwt.sign(
+                {
+                    id: admin.admId,
+                    name: admin.admNome,
+                    email: admin.admEmail
+                },
+                process.env.SECRET_JWT_REFRESH,
+                {
+                    expiresIn: '2h'
+                }
+            );
+
+            return response.json({
+                id: admin.admId,
+                name: admin.admNome,
+                email: admin.admEmail,
+                accessToken: token,
+                refreshToken
             });
 
-            return response.json({forceRelogin: true, message: "Usuário Atualizado! Faça login novamente."});
-        } else {
-             let pass = admin.admSenha;
-            const match = await bcrypt.compare(senha, pass)
+        } catch (error) {
+            console.error('Erro no login do administrador:', error);
 
-            if(!match) {
-                return response.status(403).send({ auth: false, message: 'User invalid!' });
-            }
+            return response.status(500).json({
+                error: 'Erro interno ao realizar login.'
+            });
         }
-
-        let token = jwt.sign({ id: admin.admId, name: admin.admNome, email: admin.admEmail }, process.env.SECRET_JWT, {expiresIn: '1h'});
-        let refreshToken = jwt.sign({ id: admin.admId, name: admin.admNome, email: admin.admEmail }, process.env.SECRET_JWT_REFRESH, {expiresIn: '2h'});
-
-        const user = {
-            id: admin.admId,
-            name: admin.admNome,
-            email: admin.admEmail,
-            accessToken: token,
-            refreshToken: refreshToken
-        }
-
-        return response.json(user);
     },
-
+      
     async loginSrv(request, response) {
         let email = request.body.email;
         let senha = request.body.password;
