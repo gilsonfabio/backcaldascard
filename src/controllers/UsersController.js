@@ -523,29 +523,92 @@ module.exports = {
     },
     */
     
+
     async loginUsr(request, response) {
-        let id = request.body.idCrt;
-        let senha = request.body.password;
+        try {
+            const id = request.body.idCrt;
+            const senha = request.body.password;
 
-        const user = await connection('servidores')
-            .where('usrCartao', id) 
-            .join('tipcontratos', 'idTip', 'servidores.usrTipContrato') 
-            .select(['servidores.*','tipcontratos.idTip','tipcontratos.tipDescricao','tipcontratos.tipParcelas'])
-            .first();
-        
-        if (!user) {            
-            return response.status(400).json({ error: 'Não encontrou administrador com este ID'});
-        } 
+            const usuario = await connection('servidores')
+                .where('servidores.usrCartao', id)
+                .join(
+                    'tipcontratos',
+                    'tipcontratos.idTip',
+                    'servidores.usrTipContrato'
+                )
+                .select([
+                    'servidores.*',
+                    'tipcontratos.idTip',
+                    'tipcontratos.tipDescricao',
+                    'tipcontratos.tipParcelas'
+                ])
+                .first();
 
-        let pass = user.usrPassword;
-        const match = await bcrypt.compare(senha, pass)
+            if (!usuario) {
+                return response.status(400).json({
+                    error: 'Não encontrou administrador com este ID'
+                });
+            }
 
-        if(!match) {
-            return response.status(403).send({ auth: false, message: 'User invalid!' });
+            // Caso 1: senha ainda não migrada para bcrypt
+            if (usuario.usrAtuPass === null) {
+
+                // Calcula o MD5 da senha informada
+                const senhaMD5 = require('crypto')
+                    .createHash('md5')
+                    .update(senha)
+                    .digest('hex');
+
+                // Confere a senha MD5
+                if (senhaMD5 !== usuario.usrPassword) {
+                    return response.status(403).json({
+                        auth: false,
+                        message: 'Usuário inválido!'
+                    });
+                }
+
+                // Senha correta: migra para bcrypt
+                const snhCrypt = await bcrypt.hash(senha, saltRounds);
+
+                await connection('servidores')
+                    .where('usrId', usuario.usrId)
+                    .update({
+                        usrPassword: snhCrypt,
+                        usrAtuPass: new Date()
+                    });
+
+                // Atualiza o objeto em memória para refletir a alteração
+                usuario.usrPassword = snhCrypt;
+                usuario.usrAtuPass = new Date();
+
+                // Continua a rotina normalmente, sem solicitar novo login
+
+            } else {
+
+                // Caso 2: senha já migrada para bcrypt
+                const match = await bcrypt.compare(
+                    senha,
+                    usuario.usrPassword
+                );
+
+                if (!match) {
+                    return response.status(403).json({
+                        auth: false,
+                        message: 'Usuário inválido!'
+                    });
+                }
+            }
+
+            // Senha validada: continua o fluxo normal do módulo
+            return response.json(usuario);
+
+        } catch (error) {
+            console.error('Erro no login do administrador:', error);
+
+            return response.status(500).json({
+                error: 'Erro interno ao realizar login.'
+            });
         }
-
-        return response.json(user);
-
     },
 
     async liberaUsr(request, response) {

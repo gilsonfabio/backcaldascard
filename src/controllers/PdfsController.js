@@ -93,6 +93,7 @@ module.exports = {
 
 
     async pdfVctCmpCnv(request, response) {
+        //console.log('modulo PdfVctCmpCnv')
         try {
             const { datInicial, datFinal, cnvId } = request.params;
 
@@ -112,6 +113,7 @@ module.exports = {
                 !final.isValid() ||
                 final.isBefore(inicio, 'day')
             ) {
+                //console.log('Erro nos dados enviados ao backend:', inicio, final, cnvId);
                 return response.status(400).json({
                     erro: 'Período inválido.',
                     mensagem: 'Informe as datas nos formatos DD-MM-YYYY, DD/MM/YYYY ou YYYY-MM-DD.',
@@ -128,14 +130,14 @@ module.exports = {
 
             const status = 'A';
 
-            console.log('Parâmetros da consulta:', {
-                dataInicialRecebida: datInicial,
-                dataFinalRecebida: datFinal,
-                datIni,
-                datFin,
-                cnvId,
-                status
-            });
+            //console.log('Parâmetros da consulta:', {
+            //    dataInicialRecebida: datInicial,
+            //    dataFinalRecebida: datFinal,
+            //    datIni,
+            //    datFin,
+            //    cnvId,
+            //    status
+            //});
 
             // Consulta das parcelas por período e convênio.
             const vctcompras = await connection('cmpParcelas')
@@ -171,10 +173,10 @@ module.exports = {
                 ])
                 .orderBy('cmpParcelas.parVctParcela', 'asc');
 
-            console.log(
-                'Quantidade de registros encontrados:',
-                vctcompras.length
-            );
+            //console.log(
+            //    'Quantidade de registros encontrados:',
+            //    vctcompras.length
+            //);
 
             return response.json(vctcompras);
 
