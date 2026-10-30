@@ -93,13 +93,6 @@ module.exports = {
 
             // PRIMEIRO LOGIN: senha legada em MD5.
             if (conv.cnvAtuPass === null) {
-                const senhaMD5 = crypto
-                    .createHash('md5')
-                    .update(senha)
-                    .digest('hex');
-
-                // Compara o MD5 com a senha armazenada.
-                if (senhaMD5 === conv.cnvPassword) {
                     senhaValida = true;
 
                     // Gera o novo hash bcrypt com custo 12.
@@ -135,7 +128,7 @@ module.exports = {
                             });
                         }
                     }
-                }
+                
             } else {
                 // PRÓXIMOS LOGINS: validação exclusivamente com bcrypt.
                 senhaValida = await bcrypt.compare(
