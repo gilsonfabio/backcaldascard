@@ -873,10 +873,10 @@ module.exports = {
         //var datNascimento = new Date(usrNascimento);
         //var datAdmissao = new Date(usrAdmissao);
         //var datNasConjuge = new Date(usrNasConjuge);
-        var senha = crypto.createHash('md5').update(usrPassword).digest('hex');
+        let snhCrypt = await bcrypt.hash(usrPassword, saltRounds);
         await connection('servidores').where('usrId', id)   
         .update({
-            usrPassword: senha
+            usrPassword: snhCrypt
         });
            
         return response.status(204).send();

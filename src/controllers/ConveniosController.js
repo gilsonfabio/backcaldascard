@@ -305,8 +305,8 @@ module.exports = {
         
         let status = "A";
   
-        var snhConvenio = crypto.createHash('md5').update(cnvPassword).digest('hex');
-        var snhCancelamento = crypto.createHash('md5').update(cnvCanPassword).digest('hex');
+        const snhConvenio = await bcrypt.hash(cnvPassword, 12);
+        const snhCancelamento = await bcrypt.hash(cnvCanPassword, 12);
             
         const [cnvId] = await connection('convenios').insert({
             cnvRazSocial, 
@@ -380,8 +380,9 @@ module.exports = {
             cnvCanPassword,
             cnvQtdParc } = request.body;
 
-        var snhConvenio = crypto.createHash('md5').update(cnvPassword).digest('hex');
-        var snhCancelamento = crypto.createHash('md5').update(cnvCanPassword).digest('hex');
+            
+        const snhConvenio = await bcrypt.hash(cnvPassword, 12);
+        const snhCancelamento = await bcrypt.hash(cnvCanPassword, 12);
 
         let datUpdate = new Date();
         await connection('convenios').where('cnvId', id)   
@@ -424,7 +425,7 @@ module.exports = {
         const { newPassword, codSeguranca } = request.body;
         
         let seguranca = '';
-        var senha = crypto.createHash('md5').update(newPassword).digest('hex');
+        const senha = await bcrypt.hash(newPassword, 12);
 
         await connection('convenios')
         .where('cnvEmail', email)
@@ -442,7 +443,7 @@ module.exports = {
         const { newPassword, codSeguranca } = request.body;
         
         let seguranca = '';
-        var senha = crypto.createHash('md5').update(newPassword).digest('hex');
+        const senha = await bcrypt.hash(newPassword, 12);
 
         await connection('convenios')
         .where('cnvEmail', email)
