@@ -510,8 +510,8 @@ module.exports = {
                                 
             const updtotConv = await connection('totVdaCnv')
                 .where('tcnvId', convenio)
-                .where('tcnvAno', anoParc)
-                .where('tcnvMes', mesParc)
+                .where('tcnvAno', year)
+                .where('tcnvMes', month)
                 .decrement({
                     tcnvVlrTotal: vlrParcela,
                     tcnvVlrTaxa: auxTaxa,
