@@ -264,7 +264,7 @@ module.exports = {
                 });
             }
 
-            console.log("Email:", email);
+            //console.log("Email:", email);
 
             // Busca usuário
             const cnv = await connection("convenios")

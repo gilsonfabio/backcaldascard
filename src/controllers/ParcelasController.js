@@ -12,10 +12,12 @@ module.exports = {
     }, 
     
     async parCompra (request, response) {
-        var id = request.params.idCmp;
-
+        let id = request.params.idCmp;
+        let status = 'A';
+        
         const parc = await connection('cmpParcelas')
         .where('parIdCompra',id)
+        .where('parStaParcela', status)
         .select('*');
         
         return response.json(parc);
