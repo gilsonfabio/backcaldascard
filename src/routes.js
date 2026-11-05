@@ -108,6 +108,7 @@ routes.get('/classCnv/:search', ConveniosController.classCnv);
 routes.get('/totConv', ConveniosController.totConv);
 
 routes.post('/signInCnv', ConveniosController.signIn);
+routes.post('/signInCnc', ConveniosController.signInCnc);
 
 routes.post('/signInAdm', AdminController.signInAdm);
 

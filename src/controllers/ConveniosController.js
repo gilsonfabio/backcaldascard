@@ -248,26 +248,113 @@ module.exports = {
             });
         }
     },
-
+    //
     //............................................................................................................................
+    //
 
     async signInCnc(request, response) {
-        let emailCnv = request.params.email;
-        let senha = request.params.password;
+        try {
+            const { email, password } = request.body;
 
-        var encodedVal = crypto.createHash('md5').update(senha).digest('hex');
-        const conv = await connection('convenios')
-            .where('cnvEmail', emailCnv)
-            .where('cnvCanPassword', encodedVal)
-            .select('cnvId', 'cnvNomFantasia')
-            .first();
-          
-        if (!conv) {
-            return response.status(400).json({ error: 'Não encontrou convênio com este ID'});
-        } 
+            // Validação básica
+            if (!email || !password) {
+                return response.status(400).json({
+                    success: false,
+                    message: "Email e senha são obrigatórios."
+                });
+            }
 
-        return response.json(conv);
-    },    
+            console.log("Email:", email);
+
+            // Busca usuário
+            const cnv = await connection("convenios")
+                .where("cnvEmail", email)
+                .select(
+                    "cnvId",
+                    "cnvNomFantasia",
+                    "cnvEmail",
+                    "cnvCanPassword",
+                    "cnvAtuCanc"
+                )
+                .first();
+
+            // Usuário não encontrado
+            if (!cnv) {
+                return response.status(401).json({
+                    success: false,
+                    message: "Usuário não encontrado."
+                });
+            }
+
+            // Primeiro login / migração de senha
+            if (!cnv.cnvAtuCanc) {
+                const senhaCriptografada = await bcrypt.hash(password, saltRounds);
+
+                await connection("convenios")
+                    .where("cnvId", cnv.cnvId)
+                    .update({
+                        cnvCanPassword: senhaCriptografada,
+                        cnvAtuCanc: new Date(),
+                    });
+
+                return response.status(200).json({
+                    success: true,
+                    forceRelogin: true,
+                    message: "Dados atualizados. Informe login novamente."
+                });
+            }
+
+            // Verifica senha
+            const senhaValida = await bcrypt.compare(
+                password,
+                cnv.cnvCanPassword
+            );
+
+            if (!senhaValida) {
+                return response.status(403).json({
+                    success: false,
+                    message: "Dados invalidos."
+                });
+            }
+
+            // Dados do usuário
+            const usuario = {
+                cnvId: cnv.cnvId,
+                cnvNomFantasia: cnv.cnvNomFantasia,
+            };
+
+            return response.status(200).json({
+                success: true,
+                user: usuario
+            });
+        } catch (error) {
+            console.error("Erro no login:", error);
+            return response.status(500).json({
+                success: false,
+                message: "Erro interno do servidor."
+            });
+        }
+    },
+
+    //............................................................................................................................
+    //
+    //async signInCnc(request, response) {
+    //    let emailCnv = request.params.email;
+    //    let senha = request.params.password;
+    //
+    //    var encodedVal = crypto.createHash('md5').update(senha).digest('hex');
+    //    const conv = await connection('convenios')
+    //        .where('cnvEmail', emailCnv)
+    //        .where('cnvCanPassword', encodedVal)
+    //        .select('cnvId', 'cnvNomFantasia')
+    //        .first();
+    //      
+    //    if (!conv) {
+    //        return response.status(400).json({ error: 'Não encontrou convênio com este ID'});
+    //    } 
+    //
+    //    return response.json(conv);
+    //},    
 
     //async signAlt(request, response) {
     //    let email = request.params.email;
