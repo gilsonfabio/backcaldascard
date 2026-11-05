@@ -426,8 +426,7 @@ module.exports = {
 
     },   
 
-    async cncCompra(request, response) {
-         
+    async cncCompra(request, response) {         
         let id = request.params.idCmp;
         const { cmpIdCanc } = request.body;
          
@@ -440,6 +439,7 @@ module.exports = {
             .join('servidores', 'usrId', 'compras.cmpServidor')
             .select(['compras.cmpServidor', 'compras.cmpConvenio', 'compras.cmpServidor', 'compras.cmpQtdParcela', 'servidores.usrCartao']);
 
+        let convenio = compras[0].cmpConvenio;
         let nroCartao = compras[0].usrCartao;
         let qtdParc = compras[0].cmpQtdParcela;
 
@@ -469,19 +469,55 @@ module.exports = {
 
         let vlrParcela = parc[0].parVlrParcela;
 
-        while (nro <= qtdParc) { 
+        const cnv = await connection('convenios')
+            .where('cnvId',convenio)
+            .join('atividades', 'atvId', 'convenios.cnvAtividade')
+            .select(['cnvId','atividades.atvTaxAdm', 'atividades.atvId']);
 
+        let idAtv = cnv[0].atvId;
+        const txa = await connection('taxMensal')
+            .where('txaMenAtvId', idAtv)
+            .where('txaMenMes', month)
+            .where('txaMenAno', year)
+            .join('atividades', 'atvId', 'taxMensal.txaMenAtvId')
+            .select(['txaMenId', 'txaMenIndice', 'atividades.atvTaxAdm'])
+            .first();
+
+            if (!txa) {
+                return response.status(404).json({
+                   error: 'Taxa mensal não encontrada'
+                });
+            }
+
+        taxa = parseInt(txa.txaMenIndice);
+        let perSist = 20;
+        let auxParcela = vlrParcela;
+        let auxTaxa = ((auxParcela * taxa) / 100);
+        let auxLiquido = auxParcela - auxTaxa; 
+        let auxSistema = ((auxTaxa * perSist) / 100);
+
+        while (nro <= qtdParc) { 
             //console.log(nroCartao);
             //console.log(year);
             //console.log(month);
             //console.log(vlrParcela);
-
             const updServ = await connection('usrSaldo')
                 .where('usrServ',nroCartao)
                 .where('usrMes',month)
                 .where('usrAno',year)
                 .decrement({usrVlrUsado: vlrParcela})
-                .increment({usrVlrDisponivel: vlrParcela});          
+                .increment({usrVlrDisponivel: vlrParcela}); 
+                                
+            const updtotConv = await connection('totVdaCnv')
+                .where('tcnvId', convenio)
+                .where('tcnvAno', anoParc)
+                .where('tcnvMes', mesParc)
+                .decrement({
+                    tcnvVlrTotal: vlrParcela,
+                    tcnvVlrTaxa: auxTaxa,
+                    tcnvVlrLiquido: auxLiquido,
+                    tcnvVlrSistema: auxSistema,                
+                });
 
             month++;
             if (month === 13) {
