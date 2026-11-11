@@ -91,7 +91,6 @@ module.exports = {
         return response.json(vctcompras);
     }, 
 
-
     async pdfVctCmpCnv(request, response) {
         //console.log('modulo PdfVctCmpCnv')
         try {
@@ -171,7 +170,7 @@ module.exports = {
                     'servidores.usrNome',
                     'convenios.cnvNomFantasia'
                 ])
-                .orderBy('cmpParcelas.parVctParcela', 'asc');
+                .orderBy('cmpParcelas.parNroParcela', 'desc');
 
             //console.log(
             //    'Quantidade de registros encontrados:',
